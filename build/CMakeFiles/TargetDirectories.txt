@@ -1,0 +1,3 @@
+/home/bamichal/EngineeringThesis/build/CMakeFiles/GraphGenerator.dir
+/home/bamichal/EngineeringThesis/build/CMakeFiles/edit_cache.dir
+/home/bamichal/EngineeringThesis/build/CMakeFiles/rebuild_cache.dir
