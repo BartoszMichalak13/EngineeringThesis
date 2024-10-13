@@ -7,23 +7,24 @@
 
 class Graph {
   private:
-    uint16_t numberOfNodes;
+    uint32_t numberOfNodes;
     Node * vertices;
-    uint16_t numberOfEdges;
-    std::vector<Node*>* adjacencyList;
+    uint32_t numberOfEdges;
+    std::vector<Edge>* adjacencyList;
+    void bfs();
 
   public:
-    Graph(uint16_t numberOfNodes, uint16_t numberOfEdges);
+    Graph(uint32_t numberOfNodes, uint32_t numberOfEdges);
     ~Graph();
-    void addEdge(uint16_t node1Id, uint16_t node2Id);
+    void addEdge(uint32_t node1Id, uint32_t node2Id);
     void printData();
-    bool checkIfEdgeExists(uint16_t node1Id, uint16_t node2Id);
-    void bfs();
+    bool checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id);
     bool isConnected();
+    void Dijkstra();
     void printVisitedStatus();
     void resetVisitedStatus();
 };
 
-void generateGraph(uint16_t numberOfNodes, uint16_t numberOfEdges, float density);
+void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density);
 
 #endif

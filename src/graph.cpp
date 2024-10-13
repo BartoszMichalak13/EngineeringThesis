@@ -2,16 +2,21 @@
 #include "random.hpp"
 #include <iostream>
 #include <queue>
-Graph::Graph(uint16_t numberOfNodes, uint16_t numberOfEdges)
+#include <functional>
+
+Random randomGen;
+const uint32_t maxEdgeWeight = 1024;
+
+Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges)
 {
   this->numberOfNodes = numberOfNodes;
   this->numberOfEdges = numberOfEdges;
   this->vertices = new Node[numberOfNodes];
-  for (uint16_t i = 0; i < numberOfNodes; ++i) 
+  for (uint32_t i = 0; i < numberOfNodes; ++i) 
   {
     vertices[i] = Node(i);
   }
-  this->adjacencyList = new std::vector<Node*>[numberOfNodes];
+  this->adjacencyList = new std::vector<Edge>[numberOfNodes];
 }
 
 Graph::~Graph()
@@ -20,48 +25,14 @@ Graph::~Graph()
   delete[] vertices;
 }
 
-void Graph::addEdge(uint16_t node1Id, uint16_t node2Id)
+void Graph::addEdge(uint32_t node1Id, uint32_t node2Id)
 {
   // We choose them, so that they're smaller than numberOfNodes
-  this->adjacencyList[node1Id].push_back(&vertices[node2Id]);
-  this->adjacencyList[node2Id].push_back(&vertices[node1Id]);
+  const uint32_t weight = randomGen.generateRandomNumber(maxEdgeWeight);
+  this->adjacencyList[node1Id].push_back(Edge(&vertices[node2Id], weight));
+  this->adjacencyList[node2Id].push_back(Edge(&vertices[node1Id], weight));
 }
 
-void Graph::printData()
-{
-  for (int i = 0; i < numberOfNodes; ++i)
-  {
-    std::cout << "node " << i << " is connected to:\n\t"; 
-    for (const auto& node : adjacencyList[i])
-    {
-      std::cout << static_cast<uint16_t>(node->id) << " "; 
-    }
-    std::cout << std::endl;
-  }
-}
-
-bool Graph::isConnected()
-{
-  for (uint16_t i = 0; i < numberOfNodes; ++i)
-    if (!vertices[i].visited)
-      return false;
-  return true;
-}
-
-void Graph::resetVisitedStatus()
-{
-  for (uint16_t i = 0; i < numberOfNodes; ++i)
-    vertices[i].visited = false;
-}
-
-void Graph::printVisitedStatus()
-{
-  for (uint16_t i = 0; i < numberOfNodes; ++i)
-    std::cout << "node " << i << " visited = " << vertices[i].visited << std::endl;
-}
-
-
-// Returns if graph is connected
 void Graph::bfs() 
 {
   std::queue<Node*> toVisit;
@@ -72,51 +43,128 @@ void Graph::bfs()
     currentNode = toVisit.front();
     toVisit.pop();
     currentNode->visited = true;
-    for (const auto& node : adjacencyList[currentNode->id])
+    for (const auto& edge : adjacencyList[currentNode->id])
     {
-      if(!node->visited)
+      if(!edge.end->visited)
       {
-        toVisit.push(node);
-        node->visited = true;
+        toVisit.push(edge.end);
+        edge.end->visited = true;
       }
       //printVisitedStatus();
     }
   }
 } 
 
-bool Graph::checkIfEdgeExists(uint16_t node1Id, uint16_t node2Id) 
+// this is an structure which implements the
+// operator overloading
+struct EdgeWeightComparator {
+    bool operator()(Edge const& e1, Edge const& e2)
+    {
+        // return "true" if "p1" is ordered
+        // before "p2", for example:
+        return e1.weight < e1.weight;
+    }
+};
+void Graph::Dijkstra() 
 {
-  for (const auto& node : adjacencyList[node1Id])
-    if (node->id == node2Id)
+  // std::queue<Node*> toVisit;
+  std::priority_queue<Edge, std::vector<Edge>, EdgeWeightComparator> toVisit;
+  Edge currentEdge = Edge(&vertices[0], 0);
+  toVisit.push(currentEdge);
+
+  // Track total cost
+  uint32_t totalCost = 0;
+
+  while (!toVisit.empty())
+  {
+    std::cout << "We went from node " << currentEdge.end->id; // this untrue in the sense that it may show wrong starting dest
+    currentEdge = toVisit.top();
+    toVisit.pop();
+    currentEdge.end->visited = true;
+    totalCost += currentEdge.weight;
+    // Print the connection and the weight
+    std::cout << " to node " << currentEdge.end->id 
+              << " with cost " << currentEdge.weight << "\n";
+    for (const auto& edge : adjacencyList[currentEdge.end->id])
+    {
+      if(!edge.end->visited)
+      {
+        toVisit.push(edge);
+        edge.end->visited = true;
+      }
+      //printVisitedStatus();
+    }
+  }
+  std::cout << "Total cost of the path: " << totalCost << "\n";
+} 
+
+void Graph::printData()
+{
+  for (int i = 0; i < numberOfNodes; ++i)
+  {
+    std::cout << "node " << i << " is connected to:\n\t"; 
+    for (const auto& edge : adjacencyList[i])
+    {
+      std::cout << static_cast<uint32_t>(edge.end->id) << " cost(" << edge.weight << ") "; 
+    }
+    std::cout << std::endl;
+  }
+}
+
+bool Graph::isConnected()
+{
+  bfs();
+  for (uint32_t i = 0; i < numberOfNodes; ++i)
+    if (!vertices[i].visited)
+      return false;
+  return true;
+}
+
+void Graph::resetVisitedStatus()
+{
+  for (uint32_t i = 0; i < numberOfNodes; ++i)
+    vertices[i].visited = false;
+}
+
+void Graph::printVisitedStatus()
+{
+  for (uint32_t i = 0; i < numberOfNodes; ++i)
+    std::cout << "node " << i << " visited = " << vertices[i].visited << std::endl;
+}
+
+bool Graph::checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id) 
+{
+  for (const auto& edge : adjacencyList[node1Id])
+    if (edge.end->id == node2Id)
       return true;
   return false;
 }
 
-void generateGraph(uint16_t numberOfNodes, uint16_t numberOfEdges, float density)
+void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density)
 {
   Graph graph = Graph(numberOfNodes, numberOfEdges);
-  Random randomGen;
-  uint16_t range = numberOfNodes - 1;
+  const uint32_t range = numberOfNodes - 1;
 
-  for (uint16_t i = 0; i < numberOfEdges; ++i)
+  for (uint32_t i = 0; i < numberOfEdges; ++i)
   {
     bool cannotMakeEdge = true;
     while(cannotMakeEdge) 
     {
-      uint16_t node1Id = randomGen.generateRandomNumber(range);
-      uint16_t node2Id = randomGen.generateRandomNumber(range);
+      uint32_t node1Id = randomGen.generateRandomNumber(range);
+      uint32_t node2Id = randomGen.generateRandomNumber(range);
       cannotMakeEdge = graph.checkIfEdgeExists(node1Id, node2Id);
       if (!cannotMakeEdge && node1Id != node2Id) //no multi edges, no self-loops
         graph.addEdge(node1Id, node2Id);
     }
   }
-  graph.bfs();
+
+  graph.printData();
   if(graph.isConnected())
     std::cout << "Graph is connected" << std::endl;
   else
     std::cout << "Graph is NOT connected" << std::endl;
-  graph.printData();
-
+  graph.resetVisitedStatus();
+  graph.Dijkstra();
 }
 
 

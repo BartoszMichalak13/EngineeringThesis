@@ -4,7 +4,7 @@
 #include <cstdint>
 
 // Function declarations
-void parseInput(int argc, char *argv[], uint16_t &numberOfNodes, uint16_t &numberOfEdges, uint16_t &state);
+void parseInput(int argc, char *argv[], uint32_t &numberOfNodes, uint32_t &numberOfEdges, uint32_t &state);
 void writeOutput();
 
 #endif

@@ -4,7 +4,7 @@ Random::Random() : generator(rd()) {}
 
 Random::~Random() {}
 
-uint16_t Random::generateRandomNumber(uint16_t max)
+uint32_t Random::generateRandomNumber(uint32_t max)
 {
-  return std::uniform_int_distribution<uint16_t>{0, max}(this->generator);
+  return std::uniform_int_distribution<uint32_t>{0, max}(this->generator);
 }

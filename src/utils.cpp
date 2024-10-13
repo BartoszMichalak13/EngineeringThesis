@@ -4,7 +4,7 @@
 #include "utils.hpp"
 
 // Function to parse input and update parameters
-void parseInput(int argc, char *argv[], uint16_t &numberOfNodes, uint16_t &numberOfEdges, uint16_t &state)
+void parseInput(int argc, char *argv[], uint32_t &numberOfNodes, uint32_t &numberOfEdges, uint32_t &state)
 {
   switch(argc) 
   {
@@ -13,8 +13,8 @@ void parseInput(int argc, char *argv[], uint16_t &numberOfNodes, uint16_t &numbe
       state = 1;
       break;
     default:
-      numberOfNodes = static_cast<uint16_t>(std::stoi(argv[1])); 
-      numberOfEdges = static_cast<uint16_t>(std::stoi(argv[2])); 
+      numberOfNodes = static_cast<uint32_t>(std::stoi(argv[1])); 
+      numberOfEdges = static_cast<uint32_t>(std::stoi(argv[2])); 
       state = 0;
       break;
   }
