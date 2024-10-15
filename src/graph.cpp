@@ -3,6 +3,7 @@
 #include <iostream>
 #include <queue>
 #include <functional>
+#include <stdint.h>
 
 Random randomGen;
 const uint32_t maxEdgeWeight = 1024;
@@ -29,8 +30,8 @@ void Graph::addEdge(uint32_t node1Id, uint32_t node2Id)
 {
   // We choose them, so that they're smaller than numberOfNodes
   const uint32_t weight = randomGen.generateRandomNumber(maxEdgeWeight);
-  this->adjacencyList[node1Id].push_back(Edge(&vertices[node2Id], weight));
-  this->adjacencyList[node2Id].push_back(Edge(&vertices[node1Id], weight));
+  this->adjacencyList[node1Id].push_back(Edge(&vertices[node2Id], weight, &vertices[node1Id]));
+  this->adjacencyList[node2Id].push_back(Edge(&vertices[node1Id], weight, &vertices[node2Id]));
 }
 
 void Graph::bfs() 
@@ -55,48 +56,184 @@ void Graph::bfs()
   }
 } 
 
+//Q: is really dijkstra? Q2: is it necessery?
+
 // this is an structure which implements the
-// operator overloading
+// operator overloading - it used to be not a pointer
 struct EdgeWeightComparator {
-    bool operator()(Edge const& e1, Edge const& e2)
+    bool operator()(Edge* const& e1, Edge* const& e2)
     {
-        // return "true" if "p1" is ordered
-        // before "p2", for example:
-        return e1.weight < e1.weight;
+        return e1->weight < e1->weight;
     }
 };
-void Graph::Dijkstra() 
+// void Graph::Dijkstra() 
+// {
+//   // std::queue<Node*> toVisit;
+//   std::priority_queue<Edge, std::vector<Edge>, EdgeWeightComparator> toVisit;
+//   Edge currentEdge = Edge(&vertices[0], 0, &vertices[0]); //Pseudo edge used just as "starter"
+//   toVisit.push(currentEdge);
+//   // // Track total cost
+//   // uint32_t totalCost = 0;
+//   while (!toVisit.empty())
+//   {
+//     // std::cout << "We went from node " << currentEdge.end->id; // this untrue in the sense that it may show wrong starting dest
+//     currentEdge = toVisit.top();
+//     toVisit.pop();
+//     currentEdge.end->visited = true;
+//     // totalCost += currentEdge.weight;
+//     // // Print the connection and the weight
+//     // std::cout << " to node " << currentEdge.end->id 
+//     //           << " with cost " << currentEdge.weight << "\n";
+//     for (const auto& edge : adjacencyList[currentEdge.end->id])
+//     {
+//       if(!edge.end->visited)
+//       {
+//         toVisit.push(edge);
+//         edge.end->visited = true;
+//       }
+//       //printVisitedStatus();
+//     }
+//   }
+//   // std::cout << "Total cost of the path: " << totalCost << "\n";
+// } 
+
+/*
+Initialize a tree with a single vertex, chosen arbitrarily from the graph.
+Grow the tree by one edge: Of the edges that connect the tree to vertices not yet in the tree, find the minimum-weight edge, and transfer it to the tree.
+Repeat step 2 (until all vertices are in the tree).
+*/
+Graph Graph::PrimMST() // do it with priority Queue, maybe my own immplementation?
 {
-  // std::queue<Node*> toVisit;
-  std::priority_queue<Edge, std::vector<Edge>, EdgeWeightComparator> toVisit;
-  Edge currentEdge = Edge(&vertices[0], 0);
-  toVisit.push(currentEdge);
+  resetVisitedStatus();
+  std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparator> toVisit;
 
-  // Track total cost
-  uint32_t totalCost = 0;
+  uint32_t treeSize = 0;
+  for (Edge& edge : adjacencyList[0]) //init 
+    toVisit.push(&edge);
+  // Node * treeNodes[numberOfNodes];
+  Edge * treeEdges[numberOfNodes - 1];
+  // treeNodes[treeSize] = &vertices[treeSize];
 
-  while (!toVisit.empty())
+  // uint32_t nextNodeIndex = treeSize;
+  // Edge * nextEdge;
+  uint64_t totalWeight = 0;
+  // uint32_t minValue = UINT32_MAX;
+  // Edge * previousMinEdge;// = &Edge(&Node(),0,&Node()); //dummy 
+  
+  for (uint32_t treeSize = 0; treeSize < numberOfNodes - 1; ++treeSize)
   {
-    std::cout << "We went from node " << currentEdge.end->id; // this untrue in the sense that it may show wrong starting dest
-    currentEdge = toVisit.top();
-    toVisit.pop();
-    currentEdge.end->visited = true;
-    totalCost += currentEdge.weight;
-    // Print the connection and the weight
-    std::cout << " to node " << currentEdge.end->id 
-              << " with cost " << currentEdge.weight << "\n";
-    for (const auto& edge : adjacencyList[currentEdge.end->id])
+    while (toVisit.top()->end->visited) //remoeve all edges that lead to already visited nodes
+      toVisit.pop();
+    if (toVisit.size() == 0) 
     {
-      if(!edge.end->visited)
-      {
-        toVisit.push(edge);
-        edge.end->visited = true;
-      }
-      //printVisitedStatus();
+      std::cout << "Error, empty queue: treeSize = " << treeSize << std::endl;
+      return Graph(0,0);
     }
+
+    Edge * e = toVisit.top();
+    treeEdges[treeSize] = e;
+    toVisit.pop();
+    e->start->visited = true;
+    uint32_t nextNodeIndex = e->end->id;
+    for (Edge& edge : adjacencyList[nextNodeIndex])
+    {
+      if (!edge.end->visited)
+      {
+        toVisit.push(&edge);
+      }
+    }
+    totalWeight += e->weight;
   }
-  std::cout << "Total cost of the path: " << totalCost << "\n";
-} 
+
+  for (uint32_t i = 0; i < numberOfNodes; ++i)
+    std::cout << treeEdges[i]->start->id << "->" <<  treeEdges[i]->end->id << "; ";
+  std::cout << std::endl;
+  std::cout << "totalWeight = " << totalWeight << std::endl;
+
+  //tmp solution
+  return Graph(0,0);
+}
+
+// Graph Graph::PrimMST() // do it with priority Queue, maybe my own immplementation?
+// {
+//   resetVisitedStatus();
+//   std::priority_queue<Edge, std::vector<Edge>, EdgeWeightComparator> toVisit;
+
+//   uint32_t treeSize = 0;
+//   Node * treeNodes[numberOfNodes];
+//   Edge * treeEdges[numberOfNodes - 1];
+//   treeNodes[treeSize] = &vertices[treeSize];
+
+//   uint32_t nextNodeIndex = treeSize;
+//   Edge * nextEdge;
+//   uint64_t totalWeight = 0;
+//   uint32_t minValue = UINT32_MAX;
+//   Edge * previousMinEdge;// = &Edge(&Node(),0,&Node()); //dummy 
+
+//   while (treeSize < numberOfNodes - 1)
+//   {
+//     for (Edge& edge : adjacencyList[nextNodeIndex])
+//     {
+//       if (edge.weight < minValue && !edge.end->visited)
+//       {
+//         // previousMinEdge = minValue;
+//         minValue = edge.weight;
+
+//         nextNodeIndex = edge.end->id;
+//         nextEdge = &edge;
+//       }
+//     }
+//     vertices[nextNodeIndex].visited = true;
+//     treeEdges[treeSize] = nextEdge;
+//     totalWeight += minValue;
+//     ++treeSize;
+//   }
+
+//   for (uint32_t i = 0; i < numberOfNodes; ++i)
+//     std::cout << treeEdges[i]->start->id << "->" <<  treeEdges[i]->end->id << "; ";
+//   std::cout << std::endl;
+//   std::cout << "totalWeight = " << totalWeight << std::endl;
+// }
+
+// Graph Graph::KruskalMST()
+// {
+//   resetVisitedStatus();
+
+//   uint32_t treeSize = 0;
+//   Node * treeNodes[numberOfNodes];
+//   Edge * treeEdges[numberOfNodes - 1];
+//   treeNodes[treeSize] = &vertices[treeSize];
+
+//   uint32_t nextNodeIndex = treeSize;
+//   Edge * nextEdge;
+//   uint64_t totalWeight = 0;
+//   uint32_t minValue = UINT32_MAX;
+//   Edge * previousMinEdge;// = &Edge(&Node(),0,&Node()); //dummy 
+
+//   while (treeSize < numberOfNodes - 1)
+//   {
+//     for (Edge& edge : adjacencyList[nextNodeIndex])
+//     {
+//       if (edge.weight < minValue && !edge.end->visited)
+//       {
+//         // previousMinEdge = minValue;
+//         minValue = edge.weight;
+
+//         nextNodeIndex = edge.end->id;
+//         nextEdge = &edge;
+//       }
+//     }
+//     vertices[nextNodeIndex].visited = true;
+//     treeEdges[treeSize] = nextEdge;
+//     totalWeight += minValue;
+//     ++treeSize;
+//   }
+
+//   for (uint32_t i = 0; i < numberOfNodes; ++i)
+//     std::cout << treeEdges[i]->start->id << "->" <<  treeEdges[i]->end->id << "; ";
+//   std::cout << std::endl;
+//   std::cout << "totalWeight = " << totalWeight << std::endl;
+// }
 
 void Graph::printData()
 {
@@ -164,7 +301,10 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   else
     std::cout << "Graph is NOT connected" << std::endl;
   graph.resetVisitedStatus();
-  graph.Dijkstra();
+  Graph mst = graph.PrimMST();
+  graph.resetVisitedStatus();
+
+
 }
 
 

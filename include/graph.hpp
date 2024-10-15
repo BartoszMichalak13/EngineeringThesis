@@ -21,6 +21,8 @@ class Graph {
     bool checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id);
     bool isConnected();
     void Dijkstra();
+    Graph PrimMST(); //if it is suppose to return graph we either create childClass named tree or add another constructor for list of edges and nodes to populate the new graph
+    Graph KruskalMST(); 
     void printVisitedStatus();
     void resetVisitedStatus();
 };

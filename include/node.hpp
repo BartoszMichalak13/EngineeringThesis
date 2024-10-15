@@ -35,12 +35,14 @@ class Node
 class Edge
 {
   public:
+    Node * start; // it is distinc from end (uint instead of node) because it is not as commonly used
     Node * end;
     uint32_t weight;
     //id?
 
-    Edge(Node * node) :                   end(node), weight(0) {}
-    Edge(Node * node, uint32_t weight) :  end(node), weight(weight) {}
+    // Edge(Node * end) :                                    end(end), weight(0),      start(end) {}
+    // Edge(Node * end, uint32_t weight) :                   end(end), weight(weight), start(end) {}
+    Edge(Node * end, uint32_t weight,  Node * start) :   end(end), weight(weight), start(start) {}
 
     //operations?
 };
