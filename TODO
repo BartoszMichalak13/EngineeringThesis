@@ -11,10 +11,31 @@ X  PRZYNAJMNIEJ MAKEFILE
   alg "soft core"
 X check if graph is connected - ease way dfs
   Dijsktra
-  Prim
-  Wagi
+X  Prim
+X  Wagi
 
   Czy chce zmienic reprezentacje czy zostaje przy tej? jak nie to prim trzba zmodyfikowac na liste sasiedztwa
 
+IDEA:
+  czy moze nie gotowe grafy? bo jak nie to musze zaimplementowac algorytm dokładny (np Drayfus wagner) 
+  np 3 algorytmy + dokładny raczje git
+  mierz, badaj, zapisuj, wnioski, super jak wiadomo "dlaczego dzieje sie X"
+
+  co możemy powiedzieć o rozkładzie? czy jeśli coś wiemy(bo generujemy) to możemy tego użyć? (chyba)
+
+PLAN JAZDY:
+październik
+  22 dwa algorytmy + python (aka wykresy), fajnie jak zaczątek pracy + Drayfus
+  29 część "fajnie jak" z 22paź + trzeci algorytm
+listopad
+  5 Deadline na 3 algorytm + coś więcej w pracy + rozwinięcie generatora o badanie parametrów grafu/testowanie z roznym zakresem/rozkładem wag, grafy gęste, rzadkie itd
+  12 wykresy przeróżne 
+  17 ?
+  24 fajnie mieć juuż all gotowe
+grudzień
+  1 ?
+  8 ?
+  ??????
+
 Co wiem:
-generator jest szybki - 100k V i 500k E  "tak o" -  stan przed 13.10.2024
+generator jest szybki - 100k V i 500k E  "tak o" -  stan przed 13.10.2024, z primMST 

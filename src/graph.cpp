@@ -8,8 +8,9 @@
 Random randomGen;
 const uint32_t maxEdgeWeight = 1024;
 
-Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges)
+Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag)
 {
+  this->printFlag = printFlag;
   this->numberOfNodes = numberOfNodes;
   this->numberOfEdges = numberOfEdges;
   this->vertices = new Node[numberOfNodes];
@@ -63,7 +64,7 @@ void Graph::bfs()
 struct EdgeWeightComparator {
     bool operator()(Edge* const& e1, Edge* const& e2)
     {
-        return e1->weight < e1->weight;
+        return e1->weight > e2->weight;
     }
 };
 // void Graph::Dijkstra() 
@@ -106,34 +107,27 @@ Graph Graph::PrimMST() // do it with priority Queue, maybe my own immplementatio
 {
   resetVisitedStatus();
   std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparator> toVisit;
-
   uint32_t treeSize = 0;
   for (Edge& edge : adjacencyList[0]) //init 
     toVisit.push(&edge);
-  // Node * treeNodes[numberOfNodes];
-  Edge * treeEdges[numberOfNodes - 1];
-  // treeNodes[treeSize] = &vertices[treeSize];
-
-  // uint32_t nextNodeIndex = treeSize;
-  // Edge * nextEdge;
-  uint64_t totalWeight = 0;
-  // uint32_t minValue = UINT32_MAX;
-  // Edge * previousMinEdge;// = &Edge(&Node(),0,&Node()); //dummy 
+  vertices[0].visited = true;
   
+  Edge * treeEdges[numberOfNodes - 1];
+  uint64_t totalWeight = 0;
   for (uint32_t treeSize = 0; treeSize < numberOfNodes - 1; ++treeSize)
   {
     while (toVisit.top()->end->visited) //remoeve all edges that lead to already visited nodes
       toVisit.pop();
+
     if (toVisit.size() == 0) 
     {
-      std::cout << "Error, empty queue: treeSize = " << treeSize << std::endl;
-      return Graph(0,0);
+      std::cout << "End in loop PimMST; dummy graph" << std::endl;
+      return Graph(0,0,printFlag);
     }
-
     Edge * e = toVisit.top();
     treeEdges[treeSize] = e;
     toVisit.pop();
-    e->start->visited = true;
+    e->end->visited = true;
     uint32_t nextNodeIndex = e->end->id;
     for (Edge& edge : adjacencyList[nextNodeIndex])
     {
@@ -144,60 +138,22 @@ Graph Graph::PrimMST() // do it with priority Queue, maybe my own immplementatio
     }
     totalWeight += e->weight;
   }
+  if (printFlag && numberOfNodes < 1000)
+  {
+    for (uint32_t i = 0; i < numberOfNodes - 1; ++i)
+      std::cout << treeEdges[i]->start->id << "->" <<  treeEdges[i]->end->id << "; ";
+    std::cout << std::endl;
+  }
+  std::cout << "PimMST totalWeight = " << totalWeight << std::endl;
 
-  for (uint32_t i = 0; i < numberOfNodes; ++i)
-    std::cout << treeEdges[i]->start->id << "->" <<  treeEdges[i]->end->id << "; ";
-  std::cout << std::endl;
-  std::cout << "totalWeight = " << totalWeight << std::endl;
-
-  //tmp solution
-  return Graph(0,0);
+  std::cout << "Dummy graph primMST" << std::endl;
+  return Graph(0,0,printFlag);
 }
 
 // Graph Graph::PrimMST() // do it with priority Queue, maybe my own immplementation?
 // {
 //   resetVisitedStatus();
 //   std::priority_queue<Edge, std::vector<Edge>, EdgeWeightComparator> toVisit;
-
-//   uint32_t treeSize = 0;
-//   Node * treeNodes[numberOfNodes];
-//   Edge * treeEdges[numberOfNodes - 1];
-//   treeNodes[treeSize] = &vertices[treeSize];
-
-//   uint32_t nextNodeIndex = treeSize;
-//   Edge * nextEdge;
-//   uint64_t totalWeight = 0;
-//   uint32_t minValue = UINT32_MAX;
-//   Edge * previousMinEdge;// = &Edge(&Node(),0,&Node()); //dummy 
-
-//   while (treeSize < numberOfNodes - 1)
-//   {
-//     for (Edge& edge : adjacencyList[nextNodeIndex])
-//     {
-//       if (edge.weight < minValue && !edge.end->visited)
-//       {
-//         // previousMinEdge = minValue;
-//         minValue = edge.weight;
-
-//         nextNodeIndex = edge.end->id;
-//         nextEdge = &edge;
-//       }
-//     }
-//     vertices[nextNodeIndex].visited = true;
-//     treeEdges[treeSize] = nextEdge;
-//     totalWeight += minValue;
-//     ++treeSize;
-//   }
-
-//   for (uint32_t i = 0; i < numberOfNodes; ++i)
-//     std::cout << treeEdges[i]->start->id << "->" <<  treeEdges[i]->end->id << "; ";
-//   std::cout << std::endl;
-//   std::cout << "totalWeight = " << totalWeight << std::endl;
-// }
-
-// Graph Graph::KruskalMST()
-// {
-//   resetVisitedStatus();
 
 //   uint32_t treeSize = 0;
 //   Node * treeNodes[numberOfNodes];
@@ -277,9 +233,9 @@ bool Graph::checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id)
   return false;
 }
 
-void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density)
+void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density, bool  printFlag)
 {
-  Graph graph = Graph(numberOfNodes, numberOfEdges);
+  Graph graph = Graph(numberOfNodes, numberOfEdges, printFlag);
   const uint32_t range = numberOfNodes - 1;
 
   for (uint32_t i = 0; i < numberOfEdges; ++i)
@@ -294,8 +250,10 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
         graph.addEdge(node1Id, node2Id);
     }
   }
-
-  graph.printData();
+  if (printFlag && numberOfNodes < 1000)
+  {
+    graph.printData();
+  }
   if(graph.isConnected())
     std::cout << "Graph is connected" << std::endl;
   else
