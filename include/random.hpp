@@ -11,7 +11,7 @@ class Random {
   public:
     Random();
     ~Random();
-    uint32_t generateRandomNumber(uint32_t max);
+    uint32_t generateRandomNumber(uint32_t min, uint32_t max);
 };
 
 #endif

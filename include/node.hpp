@@ -4,8 +4,7 @@
 #include <cstdint>
 
 //here we use class instead of struct as we need to derive special nodeclass for adjacency list
-class Node 
-{
+class Node {
   public:
     uint32_t id;
     bool visited;
@@ -22,27 +21,20 @@ class Node
     }
 };
 
-// class WeightedNode : public Node
-// {
-//   public:
-//     uint32_t weight;
-//     WeightedNode() :                              Node(),   weight(0) {}
-//     WeightedNode(uint32_t id) :                   Node(id), weight(0) {}
-//     WeightedNode(uint32_t id, uint32_t weight) :  Node(id), weight(weight) {}
-//     ~WeightedNode() {}
-// };
-
-class Edge
-{
+class Edge{
   public:
-    Node * start; // it is distinc from end (uint instead of node) because it is not as commonly used
+    Node * start;
     Node * end;
     uint32_t weight;
+    Edge * pred;
+    Edge * succ;
     //id?
 
-    // Edge(Node * end) :                                    end(end), weight(0),      start(end) {}
-    // Edge(Node * end, uint32_t weight) :                   end(end), weight(weight), start(end) {}
-    Edge(Node * end, uint32_t weight,  Node * start) :   end(end), weight(weight), start(start) {}
+    Edge(bool dummy)                                                          : start(0),     end(0),   weight(!dummy),  pred(this),    succ(nullptr) {}
+    Edge()                                                                    : start(0),     end(0),   weight(0),       pred(nullptr), succ(nullptr) {}
+    Edge(Node * end, uint32_t weight, Node * start)                           : start(start), end(end), weight(weight),  pred(nullptr), succ(nullptr) {}
+    Edge(Node * end, uint32_t weight, Node * start, Edge * pred)              : start(start), end(end), weight(weight),  pred(pred),    succ(nullptr) {}
+    Edge(Node * end, uint32_t weight, Node * start, Edge * pred, Edge * succ) : start(start), end(end), weight(weight),  pred(pred),    succ(succ)    {}
 
     //operations?
 };
