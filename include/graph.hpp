@@ -20,7 +20,8 @@ class Graph {
 
 
     Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
-    Graph(Edge * edges, Node * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
+    // Graph(Edge * edges, Node * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
+    Graph(Edge * edges, Node* * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
     ~Graph();
 
     void addEdge(uint32_t node1Id, uint32_t node2Id);

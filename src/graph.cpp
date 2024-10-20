@@ -5,6 +5,8 @@
 #include <functional>
 #include <stdint.h>
 
+//TODO segfault na na koniec; do vec kopiuje sie podwojnie, zle kopiuje wierzcholki z wektora, nie wszystkie, a potem problem ze nie znajduje indexu w tablicy / za duzy
+
 Random randomGen;
 const uint32_t maxEdgeWeight = 1024;
 
@@ -16,6 +18,43 @@ struct EdgeWeightComparatorOnPointers {
     return e1->weight > e2->weight;
   }
 };
+
+
+void printEdgePred(Edge e) {
+  if (e.pred == nullptr)
+    std::cout << "e.pred doesn't exist; " << std::endl;
+  else
+    std::cout << "e.pred->end->id " << e.pred->end->id << "; e.pred->start->id " << e.pred->start->id << "; e.pred->weight " << e.pred->weight << "; " << std::endl;
+}
+
+void printEdge(Edge e) {
+  if (e.end == nullptr) {
+    std::cout << "e.end doesn't exist" << std::endl;
+    // std::cout << "e.end->id" << e.end->id << std::endl;
+    return;
+  }
+  if (e.start == nullptr) {
+    std::cout << "e.start doesn't exist" << std::endl;
+    return;
+  }
+
+  std::cout << "e.end->id " << e.end->id << "; e.start->id " << e.start->id << "; e.weight " << e.weight << "; ";
+  if (e.pred == nullptr)
+    std::cout << "e.pred doesn't exist; ";
+  else
+    std::cout << "e.pred->end->id " << e.pred->end->id << "; e.pred->start->id " << e.pred->start->id << "; e.pred->weight " << e.pred->weight << "; ";
+  if (e.succ == nullptr)
+    std::cout << "e.succ doesn't exist" << std::endl;
+  else
+    std::cout << "e.succ->end->id " << e.succ->end->id << "; e.succ->start->id " << e.succ->start->id << "; e.succ->weight" << e.succ->weight << std::endl;
+}
+
+
+void printTmpTreeEdges(Edge ** tmptreeEdges, uint32_t treeSize) {
+  for (uint32_t i = 0; i < treeSize; ++i) {
+    printEdge((*tmptreeEdges)[i]);
+  }
+}
 
 /*
 returns index from vector which holds value
@@ -38,6 +77,16 @@ int32_t findInArray(uint32_t value, Node * array, uint32_t arraySize) {
 }
 
 /*
+returns idex from array of Nodes which holds value
+*/
+int32_t findInTmpTree(uint32_t edgeStart, uint32_t edgeEnd, Edge* * array, uint32_t arraySize) {
+  for (uint32_t i = 0; i < arraySize; ++i)
+    if (array[i]->start->id == edgeStart && array[i]->end->id == edgeEnd)
+      return i;
+  return -1;
+}
+
+/*
 finds an edge in adjacencyList and returns pointer to it
 */
 Edge* findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<Edge>* adjacencyList) {
@@ -47,13 +96,13 @@ Edge* findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<Edge>* adjacenc
   return nullptr;
 }
 
-Edge* findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<Edge> edgeVec) {
-  for(uint32_t i = 0; i < edgeVec.size(); ++i)
-    if ((edgeVec.at(i).end->id == edgeEnd && edgeVec.at(i).start->id == edgeStart) ||
-        (edgeVec.at(i).start->id == edgeEnd && edgeVec.at(i).end->id == edgeStart))
-      return &edgeVec.at(i);
-  return nullptr;
-}
+// Edge* findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<Edge> edgeVec) {
+//   for(uint32_t i = 0; i < edgeVec.size(); ++i)
+//     if ((edgeVec.at(i).end->id == edgeEnd && edgeVec.at(i).start->id == edgeStart) ||
+//         (edgeVec.at(i).start->id == edgeEnd && edgeVec.at(i).end->id == edgeStart))
+//       return &edgeVec.at(i);
+//   return nullptr;
+// }
 
 Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
   this->printFlag = printFlag;
@@ -64,55 +113,91 @@ Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
   for (uint32_t i = 0; i < numberOfNodes; ++i) 
     vertices[i] = Node(i);
 }
-//TODO change EDGE constructor so its less confusing
-Graph::Graph(Edge * edges, Node * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
+
+
+Graph::Graph(Edge * edges, Node* * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
+  std::cout << "numberOfNodes: " << numberOfNodes << std::endl;
+  std::cout << "numberOfEdges: " << numberOfEdges << std::endl;
+  // std::cout << "nodes: " << sizeof(nodes) << std::endl;
   this->printFlag = printFlag;
   this->numberOfNodes = numberOfNodes;
   this->numberOfEdges = numberOfEdges;
   this->adjacencyList = new std::vector<Edge>[numberOfNodes];
   this->vertices = new Node[numberOfNodes];
   for (uint32_t i = 0; i < numberOfNodes; ++i)
-    this->vertices[i] = Node(nodes[i].id);
-
-  // std::vector<Edge> edgesVec;
+    this->vertices[i] = Node(nodes[i]->id);
   for (uint32_t i = 0; i < numberOfEdges; ++i) {
-    // Node * start = &vertices[findInArray(edges[i].start->id, vertices, numberOfNodes)];
-    // Node * end = &vertices[findInArray(edges[i].end->id, vertices, numberOfNodes)];
-    // Edge e(end, edges[i].weight, start, edges[i].pred, edges[i].succ);
-    // edgesVec.push_back(e);
-
-    Node * start = &vertices[findInArray(edges[i].start->id, vertices, numberOfNodes)];
-    Node * end = &vertices[findInArray(edges[i].end->id, vertices, numberOfNodes)];
-    // Edge * pred = findEdge(edges[i].pred->start->id,edges[i].pred->end->id,edgesVec);
-
-    Edge e1(end, edges[i].weight, start, edges[i].pred, edges[i].succ);
-    Edge e2(start, edges[i].weight, end, edges[i].pred, edges[i].succ);
-    uint32_t idx1 = findInArray(edges[i].start->id, vertices, numberOfNodes);
-    uint32_t idx2 = findInArray(edges[i].end->id, vertices, numberOfNodes);
+    std::cout << "a " << i << std::endl;
+    int32_t idx1 = findInArray(edges[i].start->id, vertices, numberOfNodes);
+    if (idx1 < 0)
+      std::cout << "Error node not found in Constructor: " << edges[i].start->id << std::endl;
+    std::cout << "idx1 " << idx1 << std::endl;
+    int32_t idx2 = findInArray(edges[i].end->id, vertices, numberOfNodes);
+    if (idx2 < 0)
+      std::cout << "Error node not found in Constructor: " << edges[i].end->id << std::endl;
+    std::cout << "idx2 " << idx2 << std::endl;
+    Node * start = &vertices[idx1];
+    std::cout << "d " << i << std::endl;
+    Node * end = &vertices[idx2];
+    std::cout << "e " << i << std::endl;
+    Edge e1(start, edges[i].weight, end);
+    std::cout << "f " << i << std::endl;
+    Edge e2(end, edges[i].weight, start);
+    std::cout << "g " << i << std::endl;
     this->adjacencyList[idx1].push_back(e1);
+    std::cout << "h " << i << std::endl;
     this->adjacencyList[idx2].push_back(e2);
+    std::cout << "i " << i << std::endl;
+    printEdge(e1);
+    printEdge(e2);
+    std::cout << "numberOfPushedEdges: " << i*2 << std::endl;
   }
-  //TODO REPAIR PREDECESSORS
-  // for (uint32_t i = 0; i < numberOfEdges; ++i) {
-  //   // // Edge e1 = edgesVec.at(i)
-  //   // Node * start = &vertices[findInArray(edges[i].start->id, vertices, numberOfNodes)];
-  //   // Node * end = &vertices[findInArray(edges[i].end->id, vertices, numberOfNodes)];
-  //   // // Edge * pred = findEdge(edges[i].pred->start->id,edges[i].pred->end->id,edgesVec);
-
-  //   // Edge e1(end, edges[i].weight, start, edges[i].pred, edges[i].succ);
-  //   // Edge e2(start, edges[i].weight, end, edges[i].pred, edges[i].succ);
-  //   // uint32_t idx1 = findInArray(edges[i].start->id, vertices, numberOfNodes);
-  //   // uint32_t idx2 = findInArray(edges[i].end->id, vertices, numberOfNodes);
-  //   // this->adjacencyList[idx1].push_back(e1);
-  //   // this->adjacencyList[idx2].push_back(e2);
-  // }
 }
+
+// Graph::Graph(Edge * edges, Node * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
+//   std::cout << "numberOfNodes: " << numberOfNodes << std::endl;
+//   std::cout << "numberOfEdges: " << numberOfEdges << std::endl;
+//   // std::cout << "nodes: " << sizeof(nodes) << std::endl;
+//   this->printFlag = printFlag;
+//   this->numberOfNodes = numberOfNodes;
+//   this->numberOfEdges = numberOfEdges;
+//   this->adjacencyList = new std::vector<Edge>[numberOfNodes];
+//   this->vertices = new Node[numberOfNodes];
+//   for (uint32_t i = 0; i < numberOfNodes; ++i)
+//     this->vertices[i] = Node(nodes[i].id);
+//   for (uint32_t i = 0; i < numberOfEdges; ++i) {
+//     std::cout << "a " << i << std::endl;
+//     int32_t idx1 = findInArray(edges[i].start->id, vertices, numberOfNodes);
+//     if (idx1 < 0)
+//       std::cout << "Error node not found in Constructor: " << edges[i].start->id << std::endl;
+//     std::cout << "idx1 " << idx1 << std::endl;
+//     int32_t idx2 = findInArray(edges[i].end->id, vertices, numberOfNodes);
+//     if (idx2 < 0)
+//       std::cout << "Error node not found in Constructor: " << edges[i].end->id << std::endl;
+//     std::cout << "idx2 " << idx2 << std::endl;
+//     Node * start = &vertices[idx1];
+//     std::cout << "d " << i << std::endl;
+//     Node * end = &vertices[idx2];
+//     std::cout << "e " << i << std::endl;
+//     Edge e1(start, edges[i].weight, end);
+//     std::cout << "f " << i << std::endl;
+//     Edge e2(end, edges[i].weight, start);
+//     std::cout << "g " << i << std::endl;
+//     this->adjacencyList[idx1].push_back(e1);
+//     std::cout << "h " << i << std::endl;
+//     this->adjacencyList[idx2].push_back(e2);
+//     std::cout << "i " << i << std::endl;
+//     printEdge(e1);
+//     printEdge(e2);
+//     std::cout << "numberOfPushedEdges: " << i*2 << std::endl;
+//   }
+// }
 
 Graph::~Graph() {
   delete[] adjacencyList;
-  adjacencyList = nullptr;
+  // adjacencyList = nullptr;
   delete[] vertices;
-  vertices = nullptr;
+  // vertices = nullptr;
 }
 
 Graph dummyGraph() {
@@ -124,15 +209,21 @@ void Graph::addEdge(uint32_t node1Id, uint32_t node2Id) {
   const uint32_t weight = randomGen.generateRandomNumber(1, maxEdgeWeight);
   if(weight == 0)
     std::cout << "ERRRRRRRRRRROR\n";
-  this->adjacencyList[node1Id].push_back(Edge(&vertices[node2Id], weight, &vertices[node1Id]));
-  this->adjacencyList[node2Id].push_back(Edge(&vertices[node1Id], weight, &vertices[node2Id]));
+  this->adjacencyList[node1Id].push_back(Edge(&vertices[node1Id], weight, &vertices[node2Id]));
+  this->adjacencyList[node2Id].push_back(Edge(&vertices[node2Id], weight, &vertices[node1Id]));
 }
 
 void printAdajcencyList(std::vector<Edge>* adjList, uint32_t listSize) {
   for (uint32_t i = 0; i < listSize; ++i) {
     std::cout << "node "<< i << std::endl;
-    for (const Edge& e: adjList[i])
-      std::cout << "edge to "<< e.end->id << " cost = " << e.weight << "; ";
+    std::cout << "\t";
+    for (const Edge& e: adjList[i]) {
+      std::cout << e.end->id << " cost(" << e.weight << ")";
+      if (e.weight == 0)
+        std::cout << "*** ";
+      else
+        std::cout << " ";
+    }
     std::cout << std::endl;
   }
 }
@@ -159,14 +250,13 @@ bool compareAdajcencyLists(std::vector<Edge>* adjList1, std::vector<Edge>* adjLi
           std::cout << "Difference in row " << i << " at element "<< j << " of value: "
             << adjList1[i].at(j).start->id << ","<< adjList1[i].at(j).end->id << " vs "
             << adjList2[i].at(j).start->id << ","<< adjList2[i].at(j).end->id  << std::endl;
-            return true;
+          return true;
         }
       }
     }
   }
   return false;
 }
-
 
 /*
 Generates vector of idx's of terminals.
@@ -175,7 +265,6 @@ std::vector<uint32_t> Graph::generateTerminals(uint32_t numberOfTerminals) {
   std::vector<uint32_t> terminals;
   uint32_t term = randomGen.generateRandomNumber(0, numberOfNodes - 1);
   terminals.push_back(term);
-
   for (uint32_t i = 1; i < numberOfTerminals; ++i) {
     while (findInVector(term, terminals) > -1) {
       term = randomGen.generateRandomNumber(0, numberOfNodes - 1);
@@ -203,18 +292,6 @@ void Graph::bfs() {
   }
 } 
 
-void printEdge(Edge e) {
-  std::cout << "e.end->id " << e.end->id << "; e.start->id " << e.start->id << "; e.weight " << e.weight << "; ";
-  if (e.pred == nullptr)
-    std::cout << "e.pred doesn't exist; ";
-  else
-    std::cout << "e.pred->end->id " << e.pred->end->id << "; e.pred->start->id " << e.pred->start->id << "; e.pred->weight " << e.pred->weight << "; ";
-  if (e.succ == nullptr)
-    std::cout << "e.succ doesn't exist" << std::endl;
-  else
-    std::cout << "e.succ->end->id " << e.succ->end->id << "; e.succ->start->id " << e.succ->start->id << "; e.succ->weight" << e.succ->weight << std::endl;
-}
-
 /*
 copies adjlist of a graph to given copyOfAdjacencyList
 */
@@ -223,69 +300,33 @@ void Graph::copyAdjacencyList(std::vector<Edge>* copyOfAdjacencyList) {
     for (const Edge& edge : adjacencyList[i]) {
       Node* start = &vertices[edge.start->id];  
       Node* end = &vertices[edge.end->id];      
-      Edge copyOfEdge(end, edge.weight, start, edge.pred, edge.succ);
+      Edge copyOfEdge(start, edge.weight, end, edge.pred, edge.succ);
       copyOfAdjacencyList[i].push_back(copyOfEdge);
     }
 }
-
-/*
-Resets modified priority_queue edge weights to those, present in adjacancyList of graph g
-*/
-// void resetQueue(std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers>& toVisit, Graph * g) {
-//   std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> tmpQueue;
-//   std::swap(tmpQueue, toVisit);
-//   while (!tmpQueue.empty()) { //unload queue to vector
-//     Edge * edge = tmpQueue.top();
-//     tmpQueue.pop();
-//     Edge * e = g->findEdge(edge->start->id, edge->end->id);
-//     //necessery for good behaviour of algorithm
-//     // e->pred = edge->pred;
-//     // e->succ = edge->succ;
-//     edge->weight = e->weight;
-
-//     //visited?
-
-//     // std::cout << "Qunload found: \n";
-//     // printEdge(*e);
-
-//     toVisit.push(edge);
-//     //TODO: should we check if it adds all edges correctly?
-//   }
-// }
-
 
 //TODO: make sure generator, generates in range 1-something aka non zero
 /*
 Resets all non zero edges to edges from adjacencyList.
 For Edges with weight == 0 we reset: visited(end and start), pred, succ
 */
-void resetCopyOfAdjacencyList(std::vector<Edge>*& lacalCopyOfAdjacencyList, Graph * g) {
+void resetCopyOfAdjacencyList(std::vector<Edge>*& localCopyOfAdjacencyList, Graph * g) {
   for (uint32_t i = 0; i < g->numberOfNodes; ++i) {
-    // std::cout << "lacalCopyOfAdjacencyList[" << i << "].size() " << lacalCopyOfAdjacencyList[i].size() << std::endl;
-    // for (uint32_t jj = 0; jj < lacalCopyOfAdjacencyList[i].size(); ++jj) {
-    //   std::cout << lacalCopyOfAdjacencyList[i].at(jj).end->id << ", ";
-    // }
-    // std::cout << std::endl;
-    // std::cout << "g->adjacencyList[" << i << "].size() " << g->adjacencyList[i].size() << std::endl;
-    // for (uint32_t jj = 0; jj < g->adjacencyList[i].size(); ++jj) {
-    //   std::cout << g->adjacencyList[i].at(jj).end->id << ", ";
-    // }
-    // std::cout << std::endl;
-    for (uint32_t j = 0; j < lacalCopyOfAdjacencyList[i].size(); ++j) {
-
-      if (lacalCopyOfAdjacencyList[i].at(j).weight) { // if non zero edge - reset it to default (adjacencyList value)
-        Edge * pred = lacalCopyOfAdjacencyList[i].at(j).pred;
-        Edge * succ = lacalCopyOfAdjacencyList[i].at(j).succ;
-        lacalCopyOfAdjacencyList[i].at(j).weight = g->adjacencyList[i].at(j).weight; //TODO: does it work as intended?
-        lacalCopyOfAdjacencyList[i].at(j).pred = pred;
-        lacalCopyOfAdjacencyList[i].at(j).succ = succ;
-      } else { // weight == 0 aka edge in tree
-        Edge * pred = &lacalCopyOfAdjacencyList[i].at(j);
-        lacalCopyOfAdjacencyList[i].at(j).pred =pred;//nullptr // TODO: is this correct way to do this?
-        lacalCopyOfAdjacencyList[i].at(j).succ = nullptr;
-      }
-      lacalCopyOfAdjacencyList[i].at(j).end->visited = false;
-      lacalCopyOfAdjacencyList[i].at(j).start->visited = false;
+    for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
+      if (localCopyOfAdjacencyList[i].at(j).weight)
+      // { // if non zero edge - reset it to default (adjacencyList value)
+        // Edge * pred = localCopyOfAdjacencyList[i].at(j).pred;
+        // Edge * succ = localCopyOfAdjacencyList[i].at(j).succ;
+        localCopyOfAdjacencyList[i].at(j).weight = g->adjacencyList[i].at(j).weight; //TODO: does it work as intended?
+        // localCopyOfAdjacencyList[i].at(j).pred = pred;
+        // localCopyOfAdjacencyList[i].at(j).succ = succ;
+      // } else { // weight == 0 aka edge in tree
+      //   // Edge * pred = &localCopyOfAdjacencyList[i].at(j);
+      //   // localCopyOfAdjacencyList[i].at(j).pred = pred;//nullptr // TODO: is this correct way to do this?
+      //   // localCopyOfAdjacencyList[i].at(j).succ = nullptr;
+      // }
+      localCopyOfAdjacencyList[i].at(j).end->visited = false;
+      localCopyOfAdjacencyList[i].at(j).start->visited = false;
     }
   }
 }
@@ -296,9 +337,8 @@ Return array of Edges with non empty fields passed to second parameter.
 */
 void cropArraytoVector(Edge* * tmptreeEdges, std::vector<Edge>& vec, uint32_t treeSize) {
   for (uint32_t i = 0; i < treeSize; ++i)
-    vec.push_back(*(tmptreeEdges)[i]);
+    vec.push_back((*tmptreeEdges)[i]);
 }
-
 
 //TODO two functions below: check if it should be as pointer or as a value
 
@@ -311,69 +351,48 @@ void cropArray(Edge* * tmptreeEdges, Edge* *treeEdges, uint32_t treeSize) {
     *(treeEdges)[i] = *(tmptreeEdges)[i];
 }
 /*
-Returns array of Nodes from array of Edges
+Returns array of Nodes from array of Edges (pass number of edges as treeSize, function knows that |V| = |E| + 1)
 */
-Node * getNodesFromEdges(std::vector<Edge> treeEdges, uint32_t treeSize) {
-  std::cout << "getNodesFromEdges nodes: " << treeEdges.at(0).start->id <<std::endl;
+// Node * getNodesFromEdges(std::vector<Edge> treeEdges, uint32_t treeSize) {
+//   Node * nodeArray = new Node[treeSize + 1];
+//   nodeArray[0] = *treeEdges.at(0).start;
+//   for (uint32_t i = 0; i < treeSize; ++i)
+//     nodeArray[i + 1] = *treeEdges.at(i).end;
+//   return nodeArray;
+// }
 
-  Node * nodeArray = new Node[treeSize + 1];
-
-  std::cout << "HELLLO " <<std::endl;
-  nodeArray[0] = *treeEdges.at(0).start;
-  std::cout << "HELLLO " <<std::endl;
-  // for (uint32_t i = 0; i < treeSize; ++i)
-    // std::cout << "treeEdges[" << i << "] "<< treeEdges[i] <<std::endl;
-
+/*
+Returns array of Nodes from array of Edges. treeSize is number of edges
+*/
+uint32_t getNodesFromEdges(std::vector<Edge> treeEdges, Node ** &treeNodes, uint32_t treeSize) {
+  uint32_t currentNumberOfNodes = 0;
   for (uint32_t i = 0; i < treeSize; ++i) {
-    std::cout << "HELLLO " <<std::endl;
-    std::cout << ", " << treeEdges.at(i).end->id <<std::endl;
-    nodeArray[i + 1] = *treeEdges.at(i).end;
+    if (findInArray(treeEdges.at(i).start->id, *treeNodes, currentNumberOfNodes) == -1) {
+      treeNodes[currentNumberOfNodes] = treeEdges.at(i).start;
+      std::cout << treeNodes[currentNumberOfNodes]->id << ", ";
+      ++currentNumberOfNodes;
+    }
+    if (findInArray(treeEdges.at(i).end->id, *treeNodes, currentNumberOfNodes) == -1) {
+      treeNodes[currentNumberOfNodes] = treeEdges.at(i).end;
+      std::cout << treeNodes[currentNumberOfNodes]->id << ", ";
+      ++currentNumberOfNodes;
+    }
   }
-  return nodeArray;
+  std::cout << std::endl;
+  return currentNumberOfNodes;
 }
 
-/*
-Returns array of Nodes from array of Edges
-*/
-void getNodesFromEdges(Edge* treeEdges, Node** treeNodes, uint32_t treeSize) {
-  std::cout << "getNodesFromEdges nodes: " << treeEdges[0].start->id;
-  std::cout << "HELLLO " <<std::endl;
-  std::cout << "HELLLO " <<std::endl;
-  std::cout << "HELLLO " <<std::endl;
-  std::cout << "HELLLO " <<std::endl;
-  std::cout << "HELLLO " <<std::endl;
-  std::cout << "HELLLO " <<std::endl;
-  std::cout << "HELLLO " <<std::endl;
-  std::cout << "HELLLO " <<std::endl;
-  std::cout << "HELLLO " <<std::endl;
-  std::cout << "HELLLO " <<std::endl;
-  (*treeNodes)[0] = *treeEdges[0].start;
-  for (uint32_t i = 0; i < treeSize; ++i) {
-    std::cout << ", " << treeEdges[i].end->id;
-    (*treeNodes)[i + 1] = *treeEdges[i].end;
-  }
-}
-
-/*
-Finds both instances of edge and updates their start.
-*/
-void updateStart(Edge * e, Node * start, std::vector<Edge>* adjList) {
-  e->start = start;
-  findEdge(e->end->id, e->start->id, adjList)->start = start;
-}
-/*
-Finds both instances of edge and updates their end.
-*/
-void updateEnd(Edge * e, Node * end, std::vector<Edge>* adjList) {
-  e->end = end;
-  findEdge(e->end->id, e->start->id, adjList)->end = end;
-}
 /*
 Finds both instances of edge and updates their weights.
 */
 void updateWeight(Edge * e, uint32_t weight, std::vector<Edge>* adjList) {
   e->weight = weight;
-  findEdge(e->end->id, e->start->id, adjList)->weight = weight;
+  Edge * edge = findEdge(e->end->id, e->start->id, adjList);
+  if (edge == nullptr) {
+    std::cout << "Couldn't find edge: "; printEdge(*e);
+  } else {
+    edge->weight = weight;
+  }
 }
 
 /*
@@ -387,7 +406,7 @@ void updatePred(Edge * e, Edge * pred, std::vector<Edge>* adjList) {
 /*
 Finds both instances of edge and creates pred loop.
 */
-void updatePred(Edge * e, std::vector<Edge>* adjList) {
+void updatePredToLoop(Edge * e, std::vector<Edge>* adjList) {
   e->pred = e;
   Edge * e2 = findEdge(e->end->id, e->start->id, adjList);
   e2->pred = e2;
@@ -414,177 +433,123 @@ modify edges, give pointer to pred
 @param terminals should be of positive size
 */
 Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Queue, maybe my own immplementation?
-
+// Original terminals: 27, 0, 35, 20, 14, 6, 28, 34, 8, 25,
   std::vector<uint32_t> originalTerminals;
   for (uint32_t i = 0; i < terminals.size(); ++i)
     originalTerminals.push_back(terminals.at(i));
 
-  std::cout << "dupa 1" << std::endl;
-  std::cout << "terminalsWEJSCICE: ";
-  for (uint32_t i = 0; i < terminals.size(); ++i)
-    std::cout << terminals.at(i) << ", ";
+  std::cout << "Original terminals: ";
+  for (uint32_t i = 0; i < originalTerminals.size(); ++i)
+    std::cout << originalTerminals.at(i) << ", ";
   std::cout << std::endl;
 
   //init
   resetVisitedStatus();
-  std::vector<Edge>* lacalCopyOfAdjacencyList = new std::vector<Edge>[numberOfNodes];
-  copyAdjacencyList(lacalCopyOfAdjacencyList);
+  std::vector<Edge>* localCopyOfAdjacencyList = new std::vector<Edge>[numberOfNodes];
+  copyAdjacencyList(localCopyOfAdjacencyList);
+
+  printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
+
   Edge * tmptreeEdges[numberOfNodes - 1]; // no chyba nie tyle I guess ale maxymalnie tyle
-      std::cout << "dupa 1" << std::endl;
 
   uint32_t treeSize = 0;
   bool foundTerminal = false;
   std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> toVisit;
-      std::cout << "dupa 1" << std::endl;
 
-  Edge dummyEdge(true);
-  for (Edge& edge : lacalCopyOfAdjacencyList[terminals.at(0)]) {
-    // updatePred(&edge, &dummyEdge, lacalCopyOfAdjacencyList);
+  for (Edge& edge : localCopyOfAdjacencyList[terminals.at(0)]) {
+    std::cout << "terminals.at(0) " << terminals.at(0) << std::endl;
+    printEdge(edge);
     toVisit.push(&edge);
   }
+
   vertices[terminals.at(0)].visited = true;
   terminals.erase(terminals.begin());
-
-  std::cout << "terminalsPOZA PIUERWSZEY: ";
-  for (uint32_t i = 0; i < terminals.size(); ++i)
-    std::cout << terminals.at(i) << ", ";
-  std::cout << std::endl;
-
-
-
   do { //TMP NOTE - should be 9
-
-    // std::cout << "adjacencyList" << std::endl;
-    // printAdajcencyList(adjacencyList, numberOfNodes);
-    // std::cout << "lacalCopyOfAdjacencyList" << std::endl;
-    // printAdajcencyList(lacalCopyOfAdjacencyList, numberOfNodes);
-    std::cout << "Comparing Adajcency Lists" << std::endl;
-    if (compareAdajcencyLists(adjacencyList, lacalCopyOfAdjacencyList, numberOfNodes)) {
+    std::cout << "dbg9 " << std::endl;
+    if (compareAdajcencyLists(adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
       std::cout << "Comparing Adajcency Lists Failed" << std::endl;
       return dummyGraph();
     }
-
-    std::cout << "terminals "<< terminals.size() << std::endl;
-    for (uint32_t i = 0; i < terminals.size(); ++i)
-      std::cout << terminals.at(i) << ", ";
-    std::cout << std::endl;
-
-
-
+    std::cout << "dbg10 " << std::endl;
 
     if (foundTerminal) {
-      std::cout << "dupaFIRTS 1" << std::endl;
       while(!toVisit.empty())
         toVisit.pop();
-      std::cout << "dupaFIRTS 2" << std::endl;
-
-      //TMP SOLUTION
+      std::cout << "dbg11 " << std::endl;
+      printTmpTreeEdges(tmptreeEdges, treeSize);
+      std::cout << "dbg11.25 " << std::endl;
       std::vector<Edge> tmpEdges;
-      // cropArray(tmptreeEdges, &tmpEdges, treeSize);
       cropArraytoVector(tmptreeEdges, tmpEdges, treeSize);
-
-      for (uint32_t i = 0; i < tmpEdges.size(); ++i)
-        std::cout << "tmpEdges.at(" << i << ").end->id" << tmpEdges.at(i).end->id << "; tmpEdges.at(" << i << ").start->id" << tmpEdges.at(i).start->id << std::endl;
-
-      std::cout << "dupaFIRTS 3" << std::endl;
-      std::cout << "treeSize "<< treeSize << std::endl;
-
-      // Node * tmpNodes = new Node[treeSize + 1];
-      //       std::cout << "dupaFIRTS 4" << std::endl;
-
-      Node * tmpNodes = getNodesFromEdges(tmpEdges, treeSize);
-      std::cout << "dupaFIRTS 4 NODES" << std::endl;
-      for (uint32_t i = 0; i < treeSize + 1; ++i) //for each node in current tree
-      {
-        std::cout << tmpNodes[i].id << ", ";
+      Node* * tmpNodes = new Node*[treeSize + 1];
+      for (uint32_t i = 0; i < tmpEdges.size(); ++i) {
+        printEdge(tmpEdges.at(i));
       }
-      std::cout << std::endl;
+      std::cout << "dbg11.5 " << treeSize << std::endl;
 
+      uint32_t currentNumberOfNodes = getNodesFromEdges(tmpEdges, tmpNodes, treeSize);
+      std::cout << "currentNumberOfNodes " << currentNumberOfNodes << std::endl;
       Edge* * e = new Edge*[treeSize + 1];
-      for (uint32_t i = 0; i < treeSize + 1; ++i) //for each node in current tree
-      {
-        //TMP SOLUTION -find edges that are part of a tree
-        std::cout << "dupaFIRTS 4.1 " << i << std::endl;
-        for (Edge& edge : lacalCopyOfAdjacencyList[tmpNodes[i].id]) {
-          if (!edge.weight)
-          {
+      std::cout << "debug tsize " << treeSize << std::endl;
+      printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
+      for (uint32_t i = 0; i < treeSize + 1; ++i) {//for each node in current tree
+        for (Edge& edge : localCopyOfAdjacencyList[tmpNodes[i]->id]) {
+          if (!edge.weight){
             e[i] = &edge;
-            std::cout << "foudn e["<<i<<"].weight " << e[i]->weight << std::endl;
-
+            std::cout << "e[" << i << "]->weight " << e[i]->weight << std::endl;
           }
         }
-
-        std::cout << "dupaFIRTS 4.2" << std::endl;
-
+        std::cout << "debug " <<  i << std::endl;
+        std::cout << "tmpNodes[" << i << "]->id " << tmpNodes[i]->id << std::endl;
         // add all other edges and set thier pred as edge from tree
-        for (Edge& edge : lacalCopyOfAdjacencyList[tmpNodes[i].id]) {
-          std::cout << "dupaFIRTS 4.2.0" << std::endl;
-
+        for (Edge& edge : localCopyOfAdjacencyList[tmpNodes[i]->id]) {
           if (edge.weight) // normal procedure
-            updatePred(&edge, e[i], lacalCopyOfAdjacencyList);
+            updatePred(&edge, e[i], localCopyOfAdjacencyList);
           else // if it's 0 it's part of a tree
-            updatePred(&edge, lacalCopyOfAdjacencyList);
-          std::cout << "dupaFIRTS 4.2.1" << std::endl;
-          std::cout << "edge.weight " << edge.weight << std::endl;
-          std::cout << "ee["<<i<<"]->weight " <<e[i]->weight << std::endl;
+            updatePredToLoop(&edge, localCopyOfAdjacencyList);
 
-          updateWeight(&edge, (edge.weight+e[i]->weight), lacalCopyOfAdjacencyList);
+          updateWeight(&edge, (edge.weight + e[i]->weight), localCopyOfAdjacencyList);
           toVisit.push(&edge);
-          std::cout << "dupaFIRTS 4.2.2" << std::endl;
-
-          std::cout << "adding:\n";
-          printEdge(edge);
         }
-        std::cout << "dupaFIRTS 4.3" << std::endl;
-
       }
+      std::cout << "dbg12 " << std::endl;
+
       delete[] tmpNodes;
-      tmpNodes = nullptr;
+      // tmpNodes = nullptr;
       delete[] e;
-      e = nullptr;
-      std::cout << "dupaFIRTS 5" << std::endl;
+      // e = nullptr;
+
       foundTerminal = false;
     }
-    std::cout << "dupa3.1" << std::endl;
-
-
-
-
 
     //main loop
     while(!foundTerminal) { // O(n^2)
-          std::cout << "TERMINALS "<< terminals.size() << std::endl;
-
       //remoeve all edges that lead to already visited nodes
       if (!toVisit.empty())
         while (toVisit.top()->end->visited)
           toVisit.pop();
 
-      std::cout << "dupa3.1.5" << std::endl;
-
       if (toVisit.empty()) {
         std::cout << "End in loop Dijkstra; dummy graph" << std::endl;
         return dummyGraph();
       }
-      std::cout << "dupa3.2" << std::endl;
 
       Edge * e = toVisit.top();
       toVisit.pop();
       e->end->visited = true;
       uint32_t nextNodeIndex = e->end->id;
-      std::cout << "dupa3.3" << std::endl;
-
-
 
       // check if we have found terminal
       int32_t idx = findInVector(nextNodeIndex, terminals);
+      std::cout << "WTF idx:" << idx << std::endl;
+      printEdge(*e);
       if (idx > -1) {
         foundTerminal = true;
-        std::cout << "dupa3.4" << std::endl;
-
         //remove found terminal from the list
         terminals.erase(terminals.begin() + idx);
-        std::cout << "dupa3.5" << std::endl;
+        std::cout << "WTF " << std::endl;
+        printEdge(*e);
+
+        //TODO - wouldnt this work if I just add the edge, and it;s pred in loop?
 
         /*
         AT THIS POINT
@@ -596,148 +561,196 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
         3. Reset Queue
         4. Rerun algorithm with new local adjacencyList (changed in 1. and 2.)
         */
-        std::cout << "dupa3.6" << std::endl;
         if (e->pred == nullptr) {
-          std::cerr << "WARNING, e->pred is null poiter: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
-          tmptreeEdges[treeSize] = findEdge(e->start->id, e->end->id, adjacencyList);
-          std::cout << "dupa3.6.01" << std::endl;
-
+          std::cout << "dbg1 " << std::endl;
+          // std::cout << "e->end->id " << e->end->id << std::endl;
+          // std::cout << "e->start->id " << e->start->id << std::endl;
+          printEdge(*findEdge(e->start->id, e->end->id, adjacencyList));
+          Edge * edg = findEdge(e->start->id, e->end->id, adjacencyList);
+          if(findInTmpTree(edg->start->id, edg->end->id, tmptreeEdges, treeSize) == -1) {
+            std::cout << "added " << std::endl;
+            printEdge(*edg);
+            tmptreeEdges[treeSize] = edg;
+            ++treeSize;
+            printTmpTreeEdges(tmptreeEdges, treeSize);
+          }
+          std::cout << "dbg2 " << std::endl;
           if (tmptreeEdges[treeSize] == nullptr) {
             std::cerr << "error, edge not found: e->start->id: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
             return dummyGraph();
           }
-          std::cout << "dupa3.6.02" << std::endl;
+          updateWeight(e, 0, localCopyOfAdjacencyList);
+          updatePredToLoop(e, localCopyOfAdjacencyList);
+        } else {
+          // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
+          while (e->pred->start->id != e->start->id) {
+            std::cout << "dbg1 " << std::endl;
+            std::cout << "HELLO " << std::endl;
+            std::cout << (e->pred != nullptr) << std::endl;
+            std::cout << (e->pred->start->id != e->start->id) << std::endl;
+            // std::cout << "e->end->id " << e->end->id << std::endl;
+            // std::cout << "e->start->id " << e->start->id << std::endl;
+            std::cout << "dbg1.5 " << std::endl;
+            updateWeight(e, 0, localCopyOfAdjacencyList);
+            printEdge(*e);
+            Edge * oldPred = e->pred;
+            updatePredToLoop(e, localCopyOfAdjacencyList);
+            printEdge(*findEdge(e->start->id, e->end->id, adjacencyList));
+            Edge * edg = findEdge(e->start->id, e->end->id, adjacencyList);
+            if(findInTmpTree(edg->start->id, edg->end->id, tmptreeEdges, treeSize) == -1) {
+              std::cout << "added " << std::endl;
+              printEdge(*edg);
+              tmptreeEdges[treeSize] = edg;
+              ++treeSize;
+              printTmpTreeEdges(tmptreeEdges, treeSize);
+            }
+            std::cout << "dbg2 " << std::endl;
+              printEdge(*e);
+
+            if (tmptreeEdges[treeSize] == nullptr) {
+              std::cerr << "error, edge not found: e->start->id: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
+              return dummyGraph();
+            }
+            std::cout << "dbg3 " << std::endl;
+            std::cout << "dbg4 " << std::endl;
+            std::cout << "dbg5 " << std::endl;
+            printEdge(*e);
+            if (oldPred == nullptr) {
+              std::cerr << "oldPred == nullptr" << std::endl;
+              break;
+            } else {
+              std::cout << "dbg5.1 " << std::endl;
+              printEdge(*e);
+              std::cout << "dbg5.2 " << std::endl;
+              printEdgePred(*e);
+              std::cout << "dbg5.2 " << std::endl;
+              e = oldPred;
+              if (e->pred == nullptr){
+                std::cout << "e->pred == nullptr in while "<< std::endl;
+                break;
+              }
+              printEdge(*e);
+              printEdgePred(*e);
+            }
+            std::cout << "dbg6 " << std::endl;
+          } // untill we reach beginning of the path
           printEdge(*e);
-
-          ++treeSize;
-          updateWeight(e, 0, lacalCopyOfAdjacencyList);
-          updatePred(e, lacalCopyOfAdjacencyList);
-
-          // return dummyGraph();
-        }
-        //TODO: clean code below?
-        // printEdge(*e);
-        // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
-        else {
-          std::cerr << "e->start->id: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
-          std::cerr << "e->pred->start->id: "<< e->pred->start->id << "; e->pred->end->id: " << e->pred->end->id << "; e->weight: "<< e->pred->weight << std::endl;
-        }
-        while (e->pred != nullptr && e->pred->start->id != e->start->id) {
-          std::cout << "dupa3.6.1" << std::endl;
-          tmptreeEdges[treeSize] = findEdge(e->start->id, e->end->id, adjacencyList);
-          std::cout << "dupa3.6.2" << std::endl;
+          updateWeight(e, 0, localCopyOfAdjacencyList);
+          updatePredToLoop(e, localCopyOfAdjacencyList);
+          Edge * edg = findEdge(e->start->id, e->end->id, adjacencyList);
+          if(findInTmpTree(edg->start->id, edg->end->id, tmptreeEdges, treeSize) == -1) {
+            std::cout << "added " << std::endl;
+            printEdge(*edg);
+            tmptreeEdges[treeSize] = edg;
+            ++treeSize;
+            printTmpTreeEdges(tmptreeEdges, treeSize);
+          }
           if (tmptreeEdges[treeSize] == nullptr) {
             std::cerr << "error, edge not found: e->start->id: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
             return dummyGraph();
           }
-          std::cout << "dupa3.6.3" << std::endl;
-          printEdge(*e);
+        }
+        std::cout << "dbg6.5 " << std::endl;
+// Original terminals: x38, 19, 9, 28, 13, x7, x11, 14, 34, 33,
 
-          ++treeSize;
-          updateWeight(e, 0, lacalCopyOfAdjacencyList);
-          Edge * oldPred = e->pred;
-          updatePred(e, lacalCopyOfAdjacencyList);
-
-          std::cout << "dupa3.6.4" << std::endl;
-
-          std::cerr << "e->start->id: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
-          if (oldPred == nullptr) {
-            std::cerr << "huj" << std::endl;
-            break;
-          }
-          else {
-            std::cerr << "oldPred->start->id: "<< oldPred->start->id << "; oldPred->end->id: " << oldPred->end->id << "; e->weight: "<< oldPred->weight << std::endl;
-            e = oldPred;
-          }
-        } // untill we reach beginning of the path
-        std::cout << "dupa3.7" << std::endl;
-          printEdge(*e);
-
-        //add last edge
-        // tmptreeEdges[treeSize] = findEdge(e->start->id, e->end->id, adjacencyList);
-        // if (tmptreeEdges[treeSize] == nullptr) {
-        //   std::cerr << "error, edge not found: e->start->id: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
-        //   return dummyGraph();
-        // }
-        // ++treeSize;
-        updateWeight(e, 0, lacalCopyOfAdjacencyList);
-
-        std::cout << "dupa3.8" << std::endl;
-
-        resetCopyOfAdjacencyList(lacalCopyOfAdjacencyList, this);
-        std::cout << "dupa3.9" << std::endl;
+        std::cout << "dbg7 " << std::endl;
+        resetCopyOfAdjacencyList(localCopyOfAdjacencyList, this);
+        std::cout << "dbg8 " << std::endl;
         break;
       }
-      for (Edge& edge : lacalCopyOfAdjacencyList[nextNodeIndex]) {
+
+      for (Edge& edge : localCopyOfAdjacencyList[nextNodeIndex]) {
         if (!edge.end->visited) {
           if (edge.weight) // normal procedure
-            // edge.pred = e;
-            updatePred(&edge, e, lacalCopyOfAdjacencyList);
+            updatePred(&edge, e, localCopyOfAdjacencyList);
           else // if it's 0 it's part of a tree
-            updatePred(&edge, lacalCopyOfAdjacencyList);
-            // edge.pred = &edge;
-          updateWeight(&edge, (edge.weight + e->weight), lacalCopyOfAdjacencyList);
-          // edge.weight += e->weight;
+            updatePredToLoop(&edge, localCopyOfAdjacencyList);
+          updateWeight(&edge, (edge.weight + e->weight), localCopyOfAdjacencyList);
           toVisit.push(&edge);
-          std::cout << "adding:\n";
-          printEdge(edge);
         }
       }
-      std::cout << "dupa4" << std::endl;
-      // printData();
-      for (uint32_t i = 0; i < treeSize; ++i)
-        std::cout << tmptreeEdges[i]->start->id << "->" <<  tmptreeEdges[i]->end->id << "; ";
-      std::cout << std::endl;
-      std::cout << "treeSize: " << treeSize << std::endl;
-      std::cout << "terminals: ";
-      for (uint32_t i = 0; i < terminals.size(); ++i)
-        std::cout << terminals.at(i) << ", ";
-      std::cout << std::endl;
     }
   } while(!terminals.empty()); // O(k)
 
-  //ISSUES, MULTIPLE SAME EDGES, DOESNT SEE MORE TERMINALS
-
+  uint64_t totalWeight = 0;
+  for (uint32_t i = 0; i < treeSize; ++i)
+    totalWeight += tmptreeEdges[i]->weight;
   //TODO: print edges in separate function
   // print edges
   if (printFlag && numberOfNodes < 1000) {
     for (uint32_t i = 0; i < treeSize; ++i)
       std::cout << tmptreeEdges[i]->start->id << "->" <<  tmptreeEdges[i]->end->id << "; ";
     std::cout << std::endl;
+    std::cout << "Original terminals: ";
+    for (uint32_t i = 0; i < originalTerminals.size(); ++i)
+      std::cout << originalTerminals.at(i) << ", ";
+    std::cout << std::endl;
   }
-  std::cout << "Original terminals: ";
-  for (uint32_t i = 0; i < originalTerminals.size(); ++i)
-    std::cout << originalTerminals.at(i) << ", ";
-  uint64_t totalWeight = 0;
-  for (uint32_t i = 0; i < treeSize; ++i)
-    totalWeight += tmptreeEdges[i]->weight;
   std::cout << "Dijkstra totalWeight = " << totalWeight << std::endl;
+
+
+  std::cout << "Edges in  tmptreeEdges: " << std::endl;
+  for (uint32_t i = 0; i < treeSize; ++i) {
+    printEdge(*tmptreeEdges[i]);
+  }
 
   std::vector<Edge> treeEdgesVec;
   cropArraytoVector(tmptreeEdges, treeEdgesVec, treeSize);
+
+  std::cout << "Edges in  treeEdgesVec: " << std::endl;
+  for (uint32_t i = 0; i < treeEdgesVec.size(); ++i) {
+    printEdge(treeEdgesVec.at(i));
+  }
 
   Edge * treeEdges = new Edge[treeSize];
   for (uint32_t i = 0; i < treeEdgesVec.size(); ++i) {
     treeEdges[i] = treeEdgesVec.at(i);
   }
+  for (uint32_t i = 0; i < treeEdgesVec.size(); ++i) {
+    printEdge(treeEdges[i]);
+  }
   // cropArray(tmptreeEdges, &treeEdges, treeSize);
-  Node * treeNodes = getNodesFromEdges(treeEdgesVec, treeSize);
+  Node* * treeNodes = new Node*[treeSize + 1];
+  uint32_t currentNumberOfNodes = getNodesFromEdges(treeEdgesVec, treeNodes, treeSize);
+    std::cout << "currentNumberOfNodes "<< currentNumberOfNodes << std::endl;
     std::cout << "dupa 123" << std::endl;
+
+  for (uint32_t i = 0; i < treeSize + 1; ++i) {
+    std::cout << treeNodes[i]->id << ", ";
+  }
+  std::cout << std::endl;
+
+  for (uint32_t i = 0; i < originalTerminals.size(); ++i) {
+    bool found = false;
+    for (uint32_t j = 0; j < treeSize+1; ++j) {
+      if (originalTerminals.at(i) == treeNodes[j]->id) {
+          std::cout << "found: " << originalTerminals.at(i) << std::endl;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      std::cout << std::endl;
+      std::cout << "missing: " << originalTerminals.at(i) << std::endl;
+    }
+  }
+  std::cout << std::endl;
+
 
   // getNodesFromEdges(treeEdges, &treeNodes, treeSize);
   Graph steinerTree = Graph(treeEdges, treeNodes, static_cast<uint32_t>(treeSize + 1), treeSize, printFlag);
   std::cout << "dupa 321" << std::endl;
 
-  delete[] lacalCopyOfAdjacencyList;
-  lacalCopyOfAdjacencyList = nullptr;
+  delete[] localCopyOfAdjacencyList;
+  // localCopyOfAdjacencyList = nullptr;
   std::cout << "dupa 321" << std::endl;
 
   delete[] treeEdges;
-  treeEdges = nullptr;
+  // treeEdges = nullptr;
   std::cout << "dupa 321" << std::endl;
 
   delete[] treeNodes;
-  treeNodes = nullptr;
+  // treeNodes = nullptr;
   std::cout << "dupa 321" << std::endl;
 
   return steinerTree;
@@ -874,10 +887,21 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   uint32_t numberOfTerminals = std::round(numberOfNodes / 4);
   std::cout << "dupa" << std::endl;
   std::vector<uint32_t> terminals = graph.generateTerminals(numberOfTerminals);
-    std::cout << "dupa" << std::endl;
+  std::cout << "dupa" << std::endl;
 
   Graph steinerTree = graph.Dijkstra(terminals);
-    std::cout << "dupa" << std::endl;
+  std::cout << "dupa" << std::endl;
+  std::cout << "steinerTree.numberOfNodes " << steinerTree.numberOfNodes << std::endl;
+  std::cout << "dupa" << std::endl;
+  std::cout << "steinerTree.adjacencyList[0].size() " << steinerTree.adjacencyList[0].size() << std::endl;
+  std::cout << "graph.adjacencyList[0].size() " << graph.adjacencyList[0].size() << std::endl;
+  std::cout << "dupa" << std::endl;
+  for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
+    for (uint32_t j = 0; j < steinerTree.adjacencyList[i].size(); ++j) {
+      printEdge(steinerTree.adjacencyList[i].at(j));
+      printEdgePred(steinerTree.adjacencyList[i].at(j));
+    }
+  std::cout << "dupa" << std::endl;
 }
 
 

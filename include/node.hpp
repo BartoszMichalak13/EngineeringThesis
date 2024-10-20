@@ -24,17 +24,17 @@ class Node {
 class Edge{
   public:
     Node * start;
-    Node * end;
     uint32_t weight;
+    Node * end;
     Edge * pred;
     Edge * succ;
     //id?
 
-    Edge(bool dummy)                                                          : start(0),     end(0),   weight(!dummy),  pred(this),    succ(nullptr) {}
-    Edge()                                                                    : start(0),     end(0),   weight(0),       pred(nullptr), succ(nullptr) {}
-    Edge(Node * end, uint32_t weight, Node * start)                           : start(start), end(end), weight(weight),  pred(nullptr), succ(nullptr) {}
-    Edge(Node * end, uint32_t weight, Node * start, Edge * pred)              : start(start), end(end), weight(weight),  pred(pred),    succ(nullptr) {}
-    Edge(Node * end, uint32_t weight, Node * start, Edge * pred, Edge * succ) : start(start), end(end), weight(weight),  pred(pred),    succ(succ)    {}
+    Edge(bool dummy)                                                          : start(0),     weight(!dummy), end(0),   pred(this),    succ(nullptr) {}
+    Edge()                                                                    : start(0),     weight(0),      end(0),   pred(nullptr), succ(nullptr) {}
+    Edge(Node * start, uint32_t weight, Node * end)                           : start(start), weight(weight), end(end), pred(nullptr), succ(nullptr) {}
+    Edge(Node * start, uint32_t weight, Node * end, Edge * pred)              : start(start), weight(weight), end(end), pred(pred),    succ(nullptr) {}
+    Edge(Node * start, uint32_t weight, Node * end, Edge * pred, Edge * succ) : start(start), weight(weight), end(end), pred(pred),    succ(succ)    {}
 
     //operations?
 };
