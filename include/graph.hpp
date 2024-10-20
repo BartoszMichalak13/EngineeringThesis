@@ -12,7 +12,7 @@ class Graph {
     uint32_t numberOfNodes;
     Node * vertices;
     uint32_t numberOfEdges;
-    std::vector<Edge>* adjacencyList;
+    std::vector<Edge*>* adjacencyList;
     bool printFlag;
     void bfs();
     //prev private above
@@ -27,7 +27,7 @@ class Graph {
     void addEdge(uint32_t node1Id, uint32_t node2Id);
     void printData();
     bool checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id);
-    void copyAdjacencyList(std::vector<Edge>*  copyOfAdjacencyList);
+    void copyAdjacencyList(std::vector<Edge*>* copyOfAdjacencyList);
     // Edge* findEdge(uint32_t edgeStart, uint32_t edgeEnd);
     std::vector<uint32_t> generateTerminals(uint32_t numberOfTerminals);
 
