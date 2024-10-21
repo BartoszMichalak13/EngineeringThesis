@@ -6,6 +6,9 @@
 #include <stdint.h>
 
 //TODO segfault na na koniec; do vec kopiuje sie podwojnie, zle kopiuje wierzcholki z wektora, nie wszystkie, a potem problem ze nie znajduje indexu w tablicy / za duzy
+//TODO Graf nie jest polaczony
+
+//coś z resetem pewnie, użyj emplace moze na priorty que
 
 Random randomGen;
 const uint32_t maxEdgeWeight = 1024;
@@ -19,6 +22,24 @@ struct EdgeWeightComparatorOnPointers {
   }
 };
 
+/*
+Struct simulating behaviour of an Edge. Craeted in rage after first attempts at implementations of TM algorithm
+*/
+struct PseudoEdge
+{
+  uint32_t start;
+  uint32_t end;
+  uint32_t weight;
+  PseudoEdge(uint32_t start, uint32_t end) {
+    this->start = start;
+    this->end = end;
+  }
+  PseudoEdge(uint32_t start, uint32_t end, uint32_t weight) {
+    this->start = start;
+    this->end = end;
+    this->weight = weight;
+  }
+};
 
 void printEdgePred(Edge e) {
   if (e.pred == nullptr)
@@ -79,9 +100,9 @@ int32_t findInArray(uint32_t value, Node * array, uint32_t arraySize) {
 /*
 returns idex from array of Nodes which holds value
 */
-int32_t findInTmpTree(uint32_t edgeStart, uint32_t edgeEnd, Edge* * array, uint32_t arraySize) {
-  for (uint32_t i = 0; i < arraySize; ++i)
-    if (array[i]->start->id == edgeStart && array[i]->end->id == edgeEnd)
+int32_t findInTmpTree(uint32_t edgeStart, uint32_t edgeEnd, std::vector<PseudoEdge> array) {
+  for (uint32_t i = 0; i < array.size(); ++i)
+    if ((array.at(i).start == edgeStart && array.at(i).end == edgeEnd) || (array.at(i).start == edgeEnd && array.at(i).end == edgeStart))
       return i;
   return -1;
 }
@@ -96,14 +117,6 @@ Edge* findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<Edge>* adjacenc
   return nullptr;
 }
 
-// Edge* findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<Edge> edgeVec) {
-//   for(uint32_t i = 0; i < edgeVec.size(); ++i)
-//     if ((edgeVec.at(i).end->id == edgeEnd && edgeVec.at(i).start->id == edgeStart) ||
-//         (edgeVec.at(i).start->id == edgeEnd && edgeVec.at(i).end->id == edgeStart))
-//       return &edgeVec.at(i);
-//   return nullptr;
-// }
-
 Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
   this->printFlag = printFlag;
   this->numberOfNodes = numberOfNodes;
@@ -114,8 +127,7 @@ Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
     vertices[i] = Node(i);
 }
 
-
-Graph::Graph(Edge * edges, Node* * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
+Graph::Graph(std::vector<Edge *> edges, std::vector<uint32_t> nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
   std::cout << "numberOfNodes: " << numberOfNodes << std::endl;
   std::cout << "numberOfEdges: " << numberOfEdges << std::endl;
   // std::cout << "nodes: " << sizeof(nodes) << std::endl;
@@ -125,73 +137,39 @@ Graph::Graph(Edge * edges, Node* * nodes, uint32_t numberOfNodes, uint32_t numbe
   this->adjacencyList = new std::vector<Edge>[numberOfNodes];
   this->vertices = new Node[numberOfNodes];
   for (uint32_t i = 0; i < numberOfNodes; ++i)
-    this->vertices[i] = Node(nodes[i]->id);
+  {
+    std::cout << "vertices: " << nodes.at(i) << std::endl;
+    this->vertices[i] = Node(nodes.at(i));
+  }
   for (uint32_t i = 0; i < numberOfEdges; ++i) {
     std::cout << "a " << i << std::endl;
-    int32_t idx1 = findInArray(edges[i].start->id, vertices, numberOfNodes);
+    int32_t idx1 = findInArray(edges.at(i)->start->id, vertices, numberOfNodes);
     if (idx1 < 0)
-      std::cout << "Error node not found in Constructor: " << edges[i].start->id << std::endl;
+      std::cout << "Error node not found in Constructor: " << edges.at(i)->start->id << std::endl;
     std::cout << "idx1 " << idx1 << std::endl;
-    int32_t idx2 = findInArray(edges[i].end->id, vertices, numberOfNodes);
+    std::cout << "vertices[idx1].id " << vertices[idx1].id << std::endl;
+    int32_t idx2 = findInArray(edges.at(i)->end->id, vertices, numberOfNodes);
     if (idx2 < 0)
-      std::cout << "Error node not found in Constructor: " << edges[i].end->id << std::endl;
+      std::cout << "Error node not found in Constructor: " << edges.at(i)->end->id << std::endl;
     std::cout << "idx2 " << idx2 << std::endl;
+    std::cout << "vertices[idx2].id " << vertices[idx2].id << std::endl;
     Node * start = &vertices[idx1];
-    std::cout << "d " << i << std::endl;
+    // std::cout << "d " << i << std::endl;
     Node * end = &vertices[idx2];
-    std::cout << "e " << i << std::endl;
-    Edge e1(start, edges[i].weight, end);
-    std::cout << "f " << i << std::endl;
-    Edge e2(end, edges[i].weight, start);
-    std::cout << "g " << i << std::endl;
+    // std::cout << "e " << i << std::endl;
+    Edge e1(start, edges.at(i)->weight, end);
+    // std::cout << "f " << i << std::endl;
+    Edge e2(end, edges.at(i)->weight, start);
+    // std::cout << "g " << i << std::endl;
     this->adjacencyList[idx1].push_back(e1);
-    std::cout << "h " << i << std::endl;
+    // std::cout << "h " << i << std::endl;
     this->adjacencyList[idx2].push_back(e2);
-    std::cout << "i " << i << std::endl;
+    // std::cout << "i " << i << std::endl;
     printEdge(e1);
     printEdge(e2);
-    std::cout << "numberOfPushedEdges: " << i*2 << std::endl;
+    std::cout << "numberOfPushedEdges: " << i*2 + 2<< std::endl;
   }
 }
-
-// Graph::Graph(Edge * edges, Node * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
-//   std::cout << "numberOfNodes: " << numberOfNodes << std::endl;
-//   std::cout << "numberOfEdges: " << numberOfEdges << std::endl;
-//   // std::cout << "nodes: " << sizeof(nodes) << std::endl;
-//   this->printFlag = printFlag;
-//   this->numberOfNodes = numberOfNodes;
-//   this->numberOfEdges = numberOfEdges;
-//   this->adjacencyList = new std::vector<Edge>[numberOfNodes];
-//   this->vertices = new Node[numberOfNodes];
-//   for (uint32_t i = 0; i < numberOfNodes; ++i)
-//     this->vertices[i] = Node(nodes[i].id);
-//   for (uint32_t i = 0; i < numberOfEdges; ++i) {
-//     std::cout << "a " << i << std::endl;
-//     int32_t idx1 = findInArray(edges[i].start->id, vertices, numberOfNodes);
-//     if (idx1 < 0)
-//       std::cout << "Error node not found in Constructor: " << edges[i].start->id << std::endl;
-//     std::cout << "idx1 " << idx1 << std::endl;
-//     int32_t idx2 = findInArray(edges[i].end->id, vertices, numberOfNodes);
-//     if (idx2 < 0)
-//       std::cout << "Error node not found in Constructor: " << edges[i].end->id << std::endl;
-//     std::cout << "idx2 " << idx2 << std::endl;
-//     Node * start = &vertices[idx1];
-//     std::cout << "d " << i << std::endl;
-//     Node * end = &vertices[idx2];
-//     std::cout << "e " << i << std::endl;
-//     Edge e1(start, edges[i].weight, end);
-//     std::cout << "f " << i << std::endl;
-//     Edge e2(end, edges[i].weight, start);
-//     std::cout << "g " << i << std::endl;
-//     this->adjacencyList[idx1].push_back(e1);
-//     std::cout << "h " << i << std::endl;
-//     this->adjacencyList[idx2].push_back(e2);
-//     std::cout << "i " << i << std::endl;
-//     printEdge(e1);
-//     printEdge(e2);
-//     std::cout << "numberOfPushedEdges: " << i*2 << std::endl;
-//   }
-// }
 
 Graph::~Graph() {
   delete[] adjacencyList;
@@ -213,11 +191,26 @@ void Graph::addEdge(uint32_t node1Id, uint32_t node2Id) {
   this->adjacencyList[node2Id].push_back(Edge(&vertices[node2Id], weight, &vertices[node1Id]));
 }
 
-void printAdajcencyList(std::vector<Edge>* adjList, uint32_t listSize) {
-  for (uint32_t i = 0; i < listSize; ++i) {
+void printAdajcencyList(std::vector<Edge>* adjList, uint32_t numberOfNodes) {
+  for (uint32_t i = 0; i < numberOfNodes; ++i) {
     std::cout << "node "<< i << std::endl;
     std::cout << "\t";
     for (const Edge& e: adjList[i]) {
+      std::cout << e.end->id << " cost(" << e.weight << ")";
+      if (e.weight == 0)
+        std::cout << "*** ";
+      else
+        std::cout << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+void Graph::printAdajcencyListFromGraph() {
+  for (uint32_t i = 0; i < numberOfNodes; ++i) {
+    std::cout << "node " << vertices[i].id << std::endl;
+    std::cout << "\t";
+    for (const Edge& e: adjacencyList[i]) {
       std::cout << e.end->id << " cost(" << e.weight << ")";
       if (e.weight == 0)
         std::cout << "*** ";
@@ -305,7 +298,6 @@ void Graph::copyAdjacencyList(std::vector<Edge>* copyOfAdjacencyList) {
     }
 }
 
-//TODO: make sure generator, generates in range 1-something aka non zero
 /*
 Resets all non zero edges to edges from adjacencyList.
 For Edges with weight == 0 we reset: visited(end and start), pred, succ
@@ -420,6 +412,85 @@ void updateSucc(Edge * e, Edge * succ, std::vector<Edge>* adjList) {
   findEdge(e->end->id, e->start->id, adjList)->succ = succ;
 }
 
+/*
+Searches neighbourhood of node at nodeIndex, adds it to toVisit
+*/
+void searchNeighbours(std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> &toVisit, std::vector<Edge>* &localCopyOfAdjacencyList, uint32_t nodeIndex, Edge * currentEdge) {
+  // for (Edge edge : localCopyOfAdjacencyList[nodeIndex]) {
+  for (uint32_t i = 0; i < localCopyOfAdjacencyList[nodeIndex].size(); ++i) {
+    Edge * edge = &localCopyOfAdjacencyList[nodeIndex].at(i);
+    if (edge->weight) // normal procedure
+      updatePred(edge, currentEdge, localCopyOfAdjacencyList);
+    else // if it's 0 it's part of a tree
+      updatePredToLoop(edge, localCopyOfAdjacencyList);
+    updateWeight(edge, (edge->weight + currentEdge->weight), localCopyOfAdjacencyList);
+    if (edge == nullptr) {
+      printEdge(edge);
+    }
+    toVisit.push(edge);
+  }
+}
+
+/*
+Prints PseudoEdge
+*/
+void tmpPseudoEdgePrint(PseudoEdge p) {
+  std::cout << p.start << " - " << p.end << std::endl;
+}
+
+/*
+Prints all PseudoEdges in given vector
+*/
+void tmpPseudoEdgePrintVec(std::vector<PseudoEdge> vec) {
+  for (const PseudoEdge& p : vec) {
+    tmpPseudoEdgePrint(p);
+  }
+}
+
+/*
+Finds unique numbers in vector and returns number of them
+*/
+uint32_t tmpPseudoEdgeFindUniqueNumbers(std::vector<PseudoEdge> vec) {
+  std::vector<uint32_t> v;
+  for (const PseudoEdge& p : vec) {
+    v.push_back(p.start);
+    v.push_back(p.end);
+  }
+  std::sort(v.begin(), v.end());
+  return std::unique(v.begin(), v.end()) - v.begin();
+}
+
+/*
+Finds unique numbers in vector and returns vetor of them
+*/
+std::vector<uint32_t> tmpPseudoEdgeReturnUniqueNumbers(std::vector<PseudoEdge> vec) {
+  std::vector<uint32_t> v;
+  for (const PseudoEdge& p : vec) {
+    v.push_back(p.start);
+    v.push_back(p.end);
+  }
+  std::sort(v.begin(), v.end());
+  v.erase(std::unique(v.begin(), v.end()), v.end());
+  return v;
+}
+
+void addTotmptreeEdgesIfNotAlreadyIn(std::vector<PseudoEdge>& tmptreeEdges, Edge * edg, uint32_t& treeSize) {
+  if (findInTmpTree(edg->start->id, edg->end->id, tmptreeEdges) == -1) {
+    std::cout << "added " << std::endl;
+    printEdge(*edg);
+    tmptreeEdges.push_back(PseudoEdge(edg->start->id, edg->end->id, edg->weight));
+    ++treeSize;
+    tmpPseudoEdgePrintVec(tmptreeEdges);
+  }
+}
+
+Edge * findZeroEdgeInAdjacentTo(uint32_t uniqueNodes, std::vector<Edge>* localCopyOfAdjacencyList) {
+  for (uint32_t i = 0; i < localCopyOfAdjacencyList[uniqueNodes].size(); ++i)
+    if (localCopyOfAdjacencyList[uniqueNodes].at(i).weight == 0)
+      return &localCopyOfAdjacencyList[uniqueNodes].at(i);
+  return nullptr;
+}
+
 /*difference between prim - 
 1. we update weights in edges, based on distance to beg. node 
 2. in this variation of Dijkstra we search just untill we meet node we search for
@@ -433,7 +504,7 @@ modify edges, give pointer to pred
 @param terminals should be of positive size
 */
 Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Queue, maybe my own immplementation?
-// Original terminals: 27, 0, 35, 20, 14, 6, 28, 34, 8, 25,
+
   std::vector<uint32_t> originalTerminals;
   for (uint32_t i = 0; i < terminals.size(); ++i)
     originalTerminals.push_back(terminals.at(i));
@@ -450,88 +521,77 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
 
   printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
 
-  Edge * tmptreeEdges[numberOfNodes - 1]; // no chyba nie tyle I guess ale maxymalnie tyle
+  std::vector<PseudoEdge> tmptreeEdges;//[numberOfNodes - 1]; // no chyba nie tyle I guess ale maxymalnie tyle
 
   uint32_t treeSize = 0;
   bool foundTerminal = false;
   std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> toVisit;
 
-  for (Edge& edge : localCopyOfAdjacencyList[terminals.at(0)]) {
-    std::cout << "terminals.at(0) " << terminals.at(0) << std::endl;
+  // for (Edge& edge : localCopyOfAdjacencyList[terminals.at(0)]) {
+  for (uint32_t i = 0; i < localCopyOfAdjacencyList[terminals.at(0)].size(); ++i) {
+    Edge * edge = &localCopyOfAdjacencyList[terminals.at(0)].at(i);
     printEdge(edge);
-    toVisit.push(&edge);
+    toVisit.push(edge);
   }
-
   vertices[terminals.at(0)].visited = true;
   terminals.erase(terminals.begin());
+
   do { //TMP NOTE - should be 9
-    std::cout << "dbg9 " << std::endl;
+    std::cout << "dbg8 " << std::endl;
     if (compareAdajcencyLists(adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
       std::cout << "Comparing Adajcency Lists Failed" << std::endl;
       return dummyGraph();
     }
-    std::cout << "dbg10 " << std::endl;
+    std::cout << "dbg9 " << std::endl;
 
     if (foundTerminal) {
-      while(!toVisit.empty())
+      while(!toVisit.empty()) {
+        std::cout << "foundTerminal removal" << std::endl;
+        printEdge(toVisit.top());
         toVisit.pop();
-      std::cout << "dbg11 " << std::endl;
-      printTmpTreeEdges(tmptreeEdges, treeSize);
-      std::cout << "dbg11.25 " << std::endl;
-      std::vector<Edge> tmpEdges;
-      cropArraytoVector(tmptreeEdges, tmpEdges, treeSize);
-      Node* * tmpNodes = new Node*[treeSize + 1];
-      for (uint32_t i = 0; i < tmpEdges.size(); ++i) {
-        printEdge(tmpEdges.at(i));
       }
-      std::cout << "dbg11.5 " << treeSize << std::endl;
 
-      uint32_t currentNumberOfNodes = getNodesFromEdges(tmpEdges, tmpNodes, treeSize);
+      std::cout << "dbg10 " << std::endl;
+      tmpPseudoEdgePrintVec(tmptreeEdges);
+      std::cout << "dbg11 " << std::endl;
+
+      uint32_t currentNumberOfNodes = tmpPseudoEdgeFindUniqueNumbers(tmptreeEdges);
+      std::vector<uint32_t> uniqueNodes = tmpPseudoEdgeReturnUniqueNumbers(tmptreeEdges);
       std::cout << "currentNumberOfNodes " << currentNumberOfNodes << std::endl;
-      Edge* * e = new Edge*[treeSize + 1];
       std::cout << "debug tsize " << treeSize << std::endl;
       printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
-      for (uint32_t i = 0; i < treeSize + 1; ++i) {//for each node in current tree
-        for (Edge& edge : localCopyOfAdjacencyList[tmpNodes[i]->id]) {
-          if (!edge.weight){
-            e[i] = &edge;
-            std::cout << "e[" << i << "]->weight " << e[i]->weight << std::endl;
-          }
+      for (uint32_t i = 0; i < uniqueNodes.size(); ++i) {
+        Edge * e = findZeroEdgeInAdjacentTo(uniqueNodes.at(i), localCopyOfAdjacencyList);
+        if (e == nullptr) {
+          std::cout << "e doesnt exit aka no neighbour with 0 weight for node "<< uniqueNodes.at(i) << std::endl;
+          return dummyGraph();
         }
-        std::cout << "debug " <<  i << std::endl;
-        std::cout << "tmpNodes[" << i << "]->id " << tmpNodes[i]->id << std::endl;
-        // add all other edges and set thier pred as edge from tree
-        for (Edge& edge : localCopyOfAdjacencyList[tmpNodes[i]->id]) {
-          if (edge.weight) // normal procedure
-            updatePred(&edge, e[i], localCopyOfAdjacencyList);
-          else // if it's 0 it's part of a tree
-            updatePredToLoop(&edge, localCopyOfAdjacencyList);
-
-          updateWeight(&edge, (edge.weight + e[i]->weight), localCopyOfAdjacencyList);
-          toVisit.push(&edge);
-        }
+        searchNeighbours(toVisit, localCopyOfAdjacencyList, uniqueNodes.at(i), e);
+        std::cout << "dbg11.1 " << std::endl;
+        e = nullptr;
+        std::cout << "dbg11.2 " << std::endl;
       }
       std::cout << "dbg12 " << std::endl;
-
-      delete[] tmpNodes;
-      // tmpNodes = nullptr;
-      delete[] e;
-      // e = nullptr;
-
       foundTerminal = false;
     }
 
     //main loop
     while(!foundTerminal) { // O(n^2)
+      std::cout << "terminals.size() " << terminals.size() << std::endl;
+      std::cout << "toVisit.size() " << toVisit.size() << std::endl;
       //remoeve all edges that lead to already visited nodes
       if (!toVisit.empty())
-        while (toVisit.top()->end->visited)
+        while (toVisit.top()->end->visited || toVisit.top() == nullptr) {
+        // while (toVisit.top()->end->visited) {
+          printEdge(toVisit.top());
           toVisit.pop();
+        }
 
       if (toVisit.empty()) {
         std::cout << "End in loop Dijkstra; dummy graph" << std::endl;
         return dummyGraph();
       }
+      std::cout << "H1 " << terminals.size() << std::endl;
 
       Edge * e = toVisit.top();
       toVisit.pop();
@@ -546,10 +606,6 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
         foundTerminal = true;
         //remove found terminal from the list
         terminals.erase(terminals.begin() + idx);
-        std::cout << "WTF " << std::endl;
-        printEdge(*e);
-
-        //TODO - wouldnt this work if I just add the edge, and it;s pred in loop?
 
         /*
         AT THIS POINT
@@ -561,125 +617,57 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
         3. Reset Queue
         4. Rerun algorithm with new local adjacencyList (changed in 1. and 2.)
         */
-        if (e->pred == nullptr) {
-          std::cout << "dbg1 " << std::endl;
-          // std::cout << "e->end->id " << e->end->id << std::endl;
-          // std::cout << "e->start->id " << e->start->id << std::endl;
-          printEdge(*findEdge(e->start->id, e->end->id, adjacencyList));
-          Edge * edg = findEdge(e->start->id, e->end->id, adjacencyList);
-          if(findInTmpTree(edg->start->id, edg->end->id, tmptreeEdges, treeSize) == -1) {
-            std::cout << "added " << std::endl;
-            printEdge(*edg);
-            tmptreeEdges[treeSize] = edg;
-            ++treeSize;
-            printTmpTreeEdges(tmptreeEdges, treeSize);
-          }
-          std::cout << "dbg2 " << std::endl;
-          if (tmptreeEdges[treeSize] == nullptr) {
-            std::cerr << "error, edge not found: e->start->id: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
-            return dummyGraph();
-          }
-          updateWeight(e, 0, localCopyOfAdjacencyList);
-          updatePredToLoop(e, localCopyOfAdjacencyList);
-        } else {
-          // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
-          while (e->pred->start->id != e->start->id) {
-            std::cout << "dbg1 " << std::endl;
-            std::cout << "HELLO " << std::endl;
-            std::cout << (e->pred != nullptr) << std::endl;
-            std::cout << (e->pred->start->id != e->start->id) << std::endl;
-            // std::cout << "e->end->id " << e->end->id << std::endl;
-            // std::cout << "e->start->id " << e->start->id << std::endl;
-            std::cout << "dbg1.5 " << std::endl;
-            updateWeight(e, 0, localCopyOfAdjacencyList);
-            printEdge(*e);
-            Edge * oldPred = e->pred;
-            updatePredToLoop(e, localCopyOfAdjacencyList);
-            printEdge(*findEdge(e->start->id, e->end->id, adjacencyList));
-            Edge * edg = findEdge(e->start->id, e->end->id, adjacencyList);
-            if(findInTmpTree(edg->start->id, edg->end->id, tmptreeEdges, treeSize) == -1) {
-              std::cout << "added " << std::endl;
-              printEdge(*edg);
-              tmptreeEdges[treeSize] = edg;
-              ++treeSize;
-              printTmpTreeEdges(tmptreeEdges, treeSize);
-            }
-            std::cout << "dbg2 " << std::endl;
-              printEdge(*e);
+        Edge * oldPred = e->pred;
+        printEdge(*findEdge(e->start->id, e->end->id, adjacencyList));
+        std::cout << "dbg1 " << std::endl;
+        updateWeight(e, 0, localCopyOfAdjacencyList);
+        updatePredToLoop(e, localCopyOfAdjacencyList);
+        std::cout << "dbg2 " << std::endl;
+        Edge * edg = findEdge(e->start->id, e->end->id, adjacencyList);
+        addTotmptreeEdgesIfNotAlreadyIn(tmptreeEdges, edg, treeSize);
 
-            if (tmptreeEdges[treeSize] == nullptr) {
-              std::cerr << "error, edge not found: e->start->id: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
-              return dummyGraph();
-            }
-            std::cout << "dbg3 " << std::endl;
-            std::cout << "dbg4 " << std::endl;
-            std::cout << "dbg5 " << std::endl;
-            printEdge(*e);
-            if (oldPred == nullptr) {
-              std::cerr << "oldPred == nullptr" << std::endl;
-              break;
-            } else {
-              std::cout << "dbg5.1 " << std::endl;
-              printEdge(*e);
-              std::cout << "dbg5.2 " << std::endl;
-              printEdgePred(*e);
-              std::cout << "dbg5.2 " << std::endl;
-              e = oldPred;
-              if (e->pred == nullptr){
-                std::cout << "e->pred == nullptr in while "<< std::endl;
-                break;
-              }
-              printEdge(*e);
-              printEdgePred(*e);
-            }
-            std::cout << "dbg6 " << std::endl;
-          } // untill we reach beginning of the path
-          printEdge(*e);
+        // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
+        // while (e->pred != nullptr && e->pred->start->id != e->start->id) {
+        while (oldPred != nullptr && oldPred->start->id != e->start->id) {
+          std::cout << "dbg3 " << std::endl;
+          e = oldPred;
+          oldPred = e->pred;
+          printEdge(*findEdge(e->start->id, e->end->id, adjacencyList));
           updateWeight(e, 0, localCopyOfAdjacencyList);
           updatePredToLoop(e, localCopyOfAdjacencyList);
+          std::cout << "dbg4 " << std::endl;
           Edge * edg = findEdge(e->start->id, e->end->id, adjacencyList);
-          if(findInTmpTree(edg->start->id, edg->end->id, tmptreeEdges, treeSize) == -1) {
-            std::cout << "added " << std::endl;
-            printEdge(*edg);
-            tmptreeEdges[treeSize] = edg;
-            ++treeSize;
-            printTmpTreeEdges(tmptreeEdges, treeSize);
-          }
-          if (tmptreeEdges[treeSize] == nullptr) {
-            std::cerr << "error, edge not found: e->start->id: "<< e->start->id << "; e->end->id: " << e->end->id << "; e->weight: "<< e->weight << std::endl;
-            return dummyGraph();
-          }
-        }
-        std::cout << "dbg6.5 " << std::endl;
+          addTotmptreeEdgesIfNotAlreadyIn(tmptreeEdges, edg, treeSize);
+          std::cout << "dbg5 " << std::endl;
+          printEdge(*e);
+        } // untill we reach beginning of the path
 // Original terminals: x38, 19, 9, 28, 13, x7, x11, 14, 34, 33,
+        std::cout << "dbg6 " << std::endl;
+        std::cout << "AAAAAAAAAAAAAAAAAA" << std::endl;
+
+        printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
+        resetCopyOfAdjacencyList(localCopyOfAdjacencyList, this);
+        printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
+
 
         std::cout << "dbg7 " << std::endl;
-        resetCopyOfAdjacencyList(localCopyOfAdjacencyList, this);
-        std::cout << "dbg8 " << std::endl;
-        break;
-      }
-
-      for (Edge& edge : localCopyOfAdjacencyList[nextNodeIndex]) {
-        if (!edge.end->visited) {
-          if (edge.weight) // normal procedure
-            updatePred(&edge, e, localCopyOfAdjacencyList);
-          else // if it's 0 it's part of a tree
-            updatePredToLoop(&edge, localCopyOfAdjacencyList);
-          updateWeight(&edge, (edge.weight + e->weight), localCopyOfAdjacencyList);
-          toVisit.push(&edge);
-        }
+        // oldPred = nullptr;
+        // e = nullptr;
+      } else { // aka terminal not found
+        searchNeighbours(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
       }
     }
   } while(!terminals.empty()); // O(k)
 
   uint64_t totalWeight = 0;
   for (uint32_t i = 0; i < treeSize; ++i)
-    totalWeight += tmptreeEdges[i]->weight;
+    totalWeight += tmptreeEdges.at(i).weight;
   //TODO: print edges in separate function
   // print edges
   if (printFlag && numberOfNodes < 1000) {
+    std::cout << "Edges in  tmptreeEdges: " << std::endl;
     for (uint32_t i = 0; i < treeSize; ++i)
-      std::cout << tmptreeEdges[i]->start->id << "->" <<  tmptreeEdges[i]->end->id << "; ";
+      std::cout << tmptreeEdges.at(i).start << "->" <<  tmptreeEdges.at(i).end << "; ";
     std::cout << std::endl;
     std::cout << "Original terminals: ";
     for (uint32_t i = 0; i < originalTerminals.size(); ++i)
@@ -688,42 +676,10 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
   }
   std::cout << "Dijkstra totalWeight = " << totalWeight << std::endl;
 
-
-  std::cout << "Edges in  tmptreeEdges: " << std::endl;
-  for (uint32_t i = 0; i < treeSize; ++i) {
-    printEdge(*tmptreeEdges[i]);
-  }
-
-  std::vector<Edge> treeEdgesVec;
-  cropArraytoVector(tmptreeEdges, treeEdgesVec, treeSize);
-
-  std::cout << "Edges in  treeEdgesVec: " << std::endl;
-  for (uint32_t i = 0; i < treeEdgesVec.size(); ++i) {
-    printEdge(treeEdgesVec.at(i));
-  }
-
-  Edge * treeEdges = new Edge[treeSize];
-  for (uint32_t i = 0; i < treeEdgesVec.size(); ++i) {
-    treeEdges[i] = treeEdgesVec.at(i);
-  }
-  for (uint32_t i = 0; i < treeEdgesVec.size(); ++i) {
-    printEdge(treeEdges[i]);
-  }
-  // cropArray(tmptreeEdges, &treeEdges, treeSize);
-  Node* * treeNodes = new Node*[treeSize + 1];
-  uint32_t currentNumberOfNodes = getNodesFromEdges(treeEdgesVec, treeNodes, treeSize);
-    std::cout << "currentNumberOfNodes "<< currentNumberOfNodes << std::endl;
-    std::cout << "dupa 123" << std::endl;
-
-  for (uint32_t i = 0; i < treeSize + 1; ++i) {
-    std::cout << treeNodes[i]->id << ", ";
-  }
-  std::cout << std::endl;
-
   for (uint32_t i = 0; i < originalTerminals.size(); ++i) {
     bool found = false;
-    for (uint32_t j = 0; j < treeSize+1; ++j) {
-      if (originalTerminals.at(i) == treeNodes[j]->id) {
+    for (uint32_t j = 0; j < treeSize; ++j) {
+      if (originalTerminals.at(i) == tmptreeEdges.at(j).start || originalTerminals.at(i) == tmptreeEdges.at(j).end) {
           std::cout << "found: " << originalTerminals.at(i) << std::endl;
         found = true;
         break;
@@ -735,23 +691,29 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
     }
   }
   std::cout << std::endl;
-
-
+//Original terminals: x27, 6, x28, x13, x12, x33, x7, x36, x10, x37,
+  std::vector<uint32_t> nodes = tmpPseudoEdgeReturnUniqueNumbers(tmptreeEdges);
+  std::vector<Edge *> treeEdges;
+  for (uint32_t i = 0; i < tmptreeEdges.size(); ++i) {
+    Edge * e = findEdge(tmptreeEdges.at(i).start, tmptreeEdges.at(i).end, adjacencyList);
+    if (e == nullptr) {
+      std::cout << "missing: " << tmptreeEdges.at(i).start << " - " << tmptreeEdges.at(i).end << std::endl;
+    }
+    printEdge(*e);
+    tmpPseudoEdgePrint(tmptreeEdges.at(i));
+    treeEdges.push_back(e);
+  }
+  std::cout << "tmptreeEdges.size() " << tmptreeEdges.size() << " treeSize " << treeSize << std::endl;
   // getNodesFromEdges(treeEdges, &treeNodes, treeSize);
-  Graph steinerTree = Graph(treeEdges, treeNodes, static_cast<uint32_t>(treeSize + 1), treeSize, printFlag);
+  Graph steinerTree = Graph(treeEdges, nodes, nodes.size(), tmptreeEdges.size(), printFlag);
+  // Graph steinerTree = dummyGraph();
+
   std::cout << "dupa 321" << std::endl;
 
   delete[] localCopyOfAdjacencyList;
   // localCopyOfAdjacencyList = nullptr;
   std::cout << "dupa 321" << std::endl;
 
-  delete[] treeEdges;
-  // treeEdges = nullptr;
-  std::cout << "dupa 321" << std::endl;
-
-  delete[] treeNodes;
-  // treeNodes = nullptr;
-  std::cout << "dupa 321" << std::endl;
 
   return steinerTree;
 }
@@ -892,10 +854,17 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   Graph steinerTree = graph.Dijkstra(terminals);
   std::cout << "dupa" << std::endl;
   std::cout << "steinerTree.numberOfNodes " << steinerTree.numberOfNodes << std::endl;
+  std::cout << "steinerTree.numberOfEdges " << steinerTree.numberOfEdges << std::endl;
+  for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
+    std::cout << "v["<< i <<"]= "  << steinerTree.vertices[i].id << std::endl;
   std::cout << "dupa" << std::endl;
   std::cout << "steinerTree.adjacencyList[0].size() " << steinerTree.adjacencyList[0].size() << std::endl;
   std::cout << "graph.adjacencyList[0].size() " << graph.adjacencyList[0].size() << std::endl;
+  graph.printAdajcencyListFromGraph();
+    std::cout << "dupa" << std::endl;
+  steinerTree.printAdajcencyListFromGraph();
   std::cout << "dupa" << std::endl;
+
   for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
     for (uint32_t j = 0; j < steinerTree.adjacencyList[i].size(); ++j) {
       printEdge(steinerTree.adjacencyList[i].at(j));

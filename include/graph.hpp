@@ -15,12 +15,13 @@ class Graph {
     std::vector<Edge>* adjacencyList;
     bool printFlag;
     void bfs();
+    void printAdajcencyListFromGraph();
     //prev private above
 
 
 
     Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
-    // Graph(Edge * edges, Node * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
+    Graph(std::vector<Edge *> edges, std::vector<uint32_t> nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
     Graph(Edge * edges, Node* * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
     ~Graph();
 
