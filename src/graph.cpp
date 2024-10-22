@@ -23,6 +23,15 @@ struct EdgeWeightComparatorOnPointers {
 };
 
 /*
+Used in priorityQueues on Edges
+*/
+struct EdgeWeightComparator {
+  bool operator()(Edge const& e1, Edge const& e2) {
+    return e1.weight > e2.weight;
+  }
+};
+
+/*
 Struct simulating behaviour of an Edge. Craeted in rage after first attempts at implementations of TM algorithm
 */
 struct PseudoEdge
@@ -412,10 +421,29 @@ void updateSucc(Edge * e, Edge * succ, std::vector<Edge>* adjList) {
   findEdge(e->end->id, e->start->id, adjList)->succ = succ;
 }
 
+// /*
+// Searches neighbourhood of node at nodeIndex, adds it to toVisit
+// */
+// void searchNeighbours(std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> &toVisit, std::vector<Edge>* &localCopyOfAdjacencyList, uint32_t nodeIndex, Edge * currentEdge) {
+//   // for (Edge edge : localCopyOfAdjacencyList[nodeIndex]) {
+//   for (uint32_t i = 0; i < localCopyOfAdjacencyList[nodeIndex].size(); ++i) {
+//     Edge * edge = &localCopyOfAdjacencyList[nodeIndex].at(i);
+//     if (edge->weight) // normal procedure
+//       updatePred(edge, currentEdge, localCopyOfAdjacencyList);
+//     else // if it's 0 it's part of a tree
+//       updatePredToLoop(edge, localCopyOfAdjacencyList);
+//     updateWeight(edge, (edge->weight + currentEdge->weight), localCopyOfAdjacencyList);
+//     if (edge == nullptr) {
+//       printEdge(edge);
+//     }
+//     toVisit.push(edge);
+//   }
+// }
+
 /*
 Searches neighbourhood of node at nodeIndex, adds it to toVisit
 */
-void searchNeighbours(std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> &toVisit, std::vector<Edge>* &localCopyOfAdjacencyList, uint32_t nodeIndex, Edge * currentEdge) {
+void searchNeighbours(std::priority_queue<Edge, std::vector<Edge>, EdgeWeightComparator> &toVisit, std::vector<Edge>* &localCopyOfAdjacencyList, uint32_t nodeIndex, Edge * currentEdge) {
   // for (Edge edge : localCopyOfAdjacencyList[nodeIndex]) {
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[nodeIndex].size(); ++i) {
     Edge * edge = &localCopyOfAdjacencyList[nodeIndex].at(i);
@@ -484,6 +512,9 @@ void addTotmptreeEdgesIfNotAlreadyIn(std::vector<PseudoEdge>& tmptreeEdges, Edge
   }
 }
 
+/*
+Maybe add field to the Edge - isNULL?
+*/
 Edge * findZeroEdgeInAdjacentTo(uint32_t uniqueNodes, std::vector<Edge>* localCopyOfAdjacencyList) {
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[uniqueNodes].size(); ++i)
     if (localCopyOfAdjacencyList[uniqueNodes].at(i).weight == 0)
@@ -525,7 +556,8 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
 
   uint32_t treeSize = 0;
   bool foundTerminal = false;
-  std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> toVisit;
+  // std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> toVisit;
+  std::priority_queue<Edge, std::vector<Edge>, EdgeWeightComparator> toVisit;
 
   // for (Edge& edge : localCopyOfAdjacencyList[terminals.at(0)]) {
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[terminals.at(0)].size(); ++i) {
@@ -643,11 +675,11 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
         } // untill we reach beginning of the path
 // Original terminals: x38, 19, 9, 28, 13, x7, x11, 14, 34, 33,
         std::cout << "dbg6 " << std::endl;
-        std::cout << "AAAAAAAAAAAAAAAAAA" << std::endl;
+        // std::cout << "AAAAAAAAAAAAAAAAAA" << std::endl;
 
-        printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
+        // printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
         resetCopyOfAdjacencyList(localCopyOfAdjacencyList, this);
-        printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
+        // printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
 
 
         std::cout << "dbg7 " << std::endl;
