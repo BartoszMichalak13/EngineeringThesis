@@ -23,18 +23,18 @@ class Node {
 
 class Edge{
   public:
-    Node * start;
+    std::shared_ptr<Node> start;
     uint32_t weight;
-    Node * end;
-    Edge * pred;
-    Edge * succ;
+    std::shared_ptr<Node> end;
+    std::shared_ptr<Edge> pred;
+    std::shared_ptr<Edge> succ;
     //id?
 
-    Edge(bool dummy)                                                          : start(0),     weight(!dummy), end(0),   pred(this),    succ(nullptr) {}
-    Edge()                                                                    : start(0),     weight(0),      end(0),   pred(nullptr), succ(nullptr) {}
-    Edge(Node * start, uint32_t weight, Node * end)                           : start(start), weight(weight), end(end), pred(nullptr), succ(nullptr) {}
-    Edge(Node * start, uint32_t weight, Node * end, Edge * pred)              : start(start), weight(weight), end(end), pred(pred),    succ(nullptr) {}
-    Edge(Node * start, uint32_t weight, Node * end, Edge * pred, Edge * succ) : start(start), weight(weight), end(end), pred(pred),    succ(succ)    {}
+    Edge(bool dummy)                                                                                                                      : start(0),     weight(!dummy), end(0),   pred(this),    succ(nullptr) {}
+    Edge()                                                                                                                                : start(0),     weight(0),      end(0),   pred(nullptr), succ(nullptr) {}
+    Edge(std::shared_ptr<Node> start, uint32_t weight, std::shared_ptr<Node> end)                                                         : start(start), weight(weight), end(end), pred(nullptr), succ(nullptr) {}
+    Edge(std::shared_ptr<Node> start, uint32_t weight, std::shared_ptr<Node> end, std::shared_ptr<Edge> pred)                             : start(start), weight(weight), end(end), pred(pred),    succ(nullptr) {}
+    Edge(std::shared_ptr<Node> start, uint32_t weight, std::shared_ptr<Node> end, std::shared_ptr<Edge> pred, std::shared_ptr<Edge> succ) : start(start), weight(weight), end(end), pred(pred),    succ(succ)    {}
 
     //operations?
 };

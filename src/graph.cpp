@@ -17,7 +17,7 @@ const uint32_t maxEdgeWeight = 1024;
 Used in priorityQueues on Edges
 */
 struct EdgeWeightComparatorOnPointers {
-  bool operator()(Edge* const& e1, Edge* const& e2) {
+  bool operator()(std::shared_ptr<Edge> const& e1, std::shared_ptr<Edge> const& e2) {
     return e1->weight > e2->weight;
   }
 };
@@ -50,40 +50,37 @@ struct PseudoEdge
   }
 };
 
-void printEdgePred(Edge e) {
-  if (e.pred == nullptr)
+void printEdgePred(std::shared_ptr<Edge> e) {
+  if (e->pred == nullptr)
     std::cout << "e.pred doesn't exist; " << std::endl;
   else
-    std::cout << "e.pred->end->id " << e.pred->end->id << "; e.pred->start->id " << e.pred->start->id << "; e.pred->weight " << e.pred->weight << "; " << std::endl;
+    std::cout << "e.pred->end->id " << e->pred->end->id << "; e.pred->start->id " << e->pred->start->id << "; e.pred->weight " << e->pred->weight << "; " << std::endl;
 }
 
-void printEdge(Edge e) {
-  if (e.end == nullptr) {
+void printEdge(std::shared_ptr<Edge> e) {
+  if (e == nullptr) {
+      std::cout << "e.end doesn't exist" << std::endl;
+    return;
+  }
+  if (e->end == nullptr) {
     std::cout << "e.end doesn't exist" << std::endl;
     // std::cout << "e.end->id" << e.end->id << std::endl;
     return;
   }
-  if (e.start == nullptr) {
+  if (e->start == nullptr) {
     std::cout << "e.start doesn't exist" << std::endl;
     return;
   }
 
-  std::cout << "e.end->id " << e.end->id << "; e.start->id " << e.start->id << "; e.weight " << e.weight << "; ";
-  if (e.pred == nullptr)
+  std::cout << "e.end->id " << e->end->id << "; e.start->id " << e->start->id << "; e.weight " << e->weight << "; ";
+  if (e->pred == nullptr)
     std::cout << "e.pred doesn't exist; ";
   else
-    std::cout << "e.pred->end->id " << e.pred->end->id << "; e.pred->start->id " << e.pred->start->id << "; e.pred->weight " << e.pred->weight << "; ";
-  if (e.succ == nullptr)
+    std::cout << "e.pred->end->id " << e->pred->end->id << "; e.pred->start->id " << e->pred->start->id << "; e.pred->weight " << e->pred->weight << "; ";
+  if (e->succ == nullptr)
     std::cout << "e.succ doesn't exist" << std::endl;
   else
-    std::cout << "e.succ->end->id " << e.succ->end->id << "; e.succ->start->id " << e.succ->start->id << "; e.succ->weight" << e.succ->weight << std::endl;
-}
-
-
-void printTmpTreeEdges(Edge ** tmptreeEdges, uint32_t treeSize) {
-  for (uint32_t i = 0; i < treeSize; ++i) {
-    printEdge((*tmptreeEdges)[i]);
-  }
+    std::cout << "e.succ->end->id " << e->succ->end->id << "; e.succ->start->id " << e->succ->start->id << "; e.succ->weight" << e->succ->weight << std::endl;
 }
 
 /*
@@ -99,9 +96,9 @@ int32_t findInVector(uint32_t value, std::vector<uint32_t> vec) {
 /*
 returns idex from array of Nodes which holds value
 */
-int32_t findInArray(uint32_t value, Node * array, uint32_t arraySize) {
+int32_t findInArray(uint32_t value, std::shared_ptr<Node>* array, uint32_t arraySize) {
   for (uint32_t i = 0; i < arraySize; ++i)
-    if (array[i].id == value)
+    if (array[i]->id == value)
       return i;
   return -1;
 }
@@ -119,10 +116,11 @@ int32_t findInTmpTree(uint32_t edgeStart, uint32_t edgeEnd, std::vector<PseudoEd
 /*
 finds an edge in adjacencyList and returns pointer to it
 */
-Edge* findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<Edge>* adjacencyList) {
+std::shared_ptr<Edge> findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<std::shared_ptr<Edge>>* adjacencyList) {
   for(uint32_t i = 0; i < adjacencyList[edgeStart].size(); ++i)
-    if (adjacencyList[edgeStart].at(i).end->id == edgeEnd)
-      return &adjacencyList[edgeStart].at(i);
+    if (adjacencyList[edgeStart].at(i)->end->id == edgeEnd)
+      return adjacencyList[edgeStart].at(i);
+  std::cout << "findEdge returns nullpointer for "<< edgeStart << " - " << edgeEnd << std::endl;
   return nullptr;
 }
 
@@ -130,53 +128,38 @@ Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
   this->printFlag = printFlag;
   this->numberOfNodes = numberOfNodes;
   this->numberOfEdges = numberOfEdges;
-  this->adjacencyList = new std::vector<Edge>[numberOfNodes];
-  this->vertices = new Node[numberOfNodes];
+  this->adjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
+  this->vertices = new std::shared_ptr<Node>[numberOfNodes];
   for (uint32_t i = 0; i < numberOfNodes; ++i) 
-    vertices[i] = Node(i);
+    vertices[i] = std::shared_ptr<Node>(new Node(i));
 }
-
-Graph::Graph(std::vector<Edge *> edges, std::vector<uint32_t> nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
+//Original terminals: x3, x23, x39, x11, x25, x32, x17, x30, x20, x6,
+Graph::Graph(std::vector<std::shared_ptr<Edge>> edges, std::vector<uint32_t> nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
   std::cout << "numberOfNodes: " << numberOfNodes << std::endl;
   std::cout << "numberOfEdges: " << numberOfEdges << std::endl;
-  // std::cout << "nodes: " << sizeof(nodes) << std::endl;
   this->printFlag = printFlag;
   this->numberOfNodes = numberOfNodes;
   this->numberOfEdges = numberOfEdges;
-  this->adjacencyList = new std::vector<Edge>[numberOfNodes];
-  this->vertices = new Node[numberOfNodes];
+  this->adjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
+  this->vertices = new std::shared_ptr<Node>[numberOfNodes];
   for (uint32_t i = 0; i < numberOfNodes; ++i)
   {
-    std::cout << "vertices: " << nodes.at(i) << std::endl;
-    this->vertices[i] = Node(nodes.at(i));
+    vertices[i] = std::shared_ptr<Node>(new Node(nodes.at(i)));
+    std::cout << "vertices: " << nodes.at(i) << " vs " << vertices[i]->id << std::endl;
   }
   for (uint32_t i = 0; i < numberOfEdges; ++i) {
-    std::cout << "a " << i << std::endl;
     int32_t idx1 = findInArray(edges.at(i)->start->id, vertices, numberOfNodes);
     if (idx1 < 0)
       std::cout << "Error node not found in Constructor: " << edges.at(i)->start->id << std::endl;
-    std::cout << "idx1 " << idx1 << std::endl;
-    std::cout << "vertices[idx1].id " << vertices[idx1].id << std::endl;
     int32_t idx2 = findInArray(edges.at(i)->end->id, vertices, numberOfNodes);
     if (idx2 < 0)
       std::cout << "Error node not found in Constructor: " << edges.at(i)->end->id << std::endl;
-    std::cout << "idx2 " << idx2 << std::endl;
-    std::cout << "vertices[idx2].id " << vertices[idx2].id << std::endl;
-    Node * start = &vertices[idx1];
-    // std::cout << "d " << i << std::endl;
-    Node * end = &vertices[idx2];
-    // std::cout << "e " << i << std::endl;
-    Edge e1(start, edges.at(i)->weight, end);
-    // std::cout << "f " << i << std::endl;
-    Edge e2(end, edges.at(i)->weight, start);
-    // std::cout << "g " << i << std::endl;
+    std::shared_ptr<Node> start = vertices[idx1];
+    std::shared_ptr<Node> end = vertices[idx2];
+    std::shared_ptr<Edge> e1(new Edge(start, edges.at(i)->weight, end));
+    std::shared_ptr<Edge> e2(new Edge(end, edges.at(i)->weight, start));
     this->adjacencyList[idx1].push_back(e1);
-    // std::cout << "h " << i << std::endl;
     this->adjacencyList[idx2].push_back(e2);
-    // std::cout << "i " << i << std::endl;
-    printEdge(e1);
-    printEdge(e2);
-    std::cout << "numberOfPushedEdges: " << i*2 + 2<< std::endl;
   }
 }
 
@@ -196,17 +179,17 @@ void Graph::addEdge(uint32_t node1Id, uint32_t node2Id) {
   const uint32_t weight = randomGen.generateRandomNumber(1, maxEdgeWeight);
   if(weight == 0)
     std::cout << "ERRRRRRRRRRROR\n";
-  this->adjacencyList[node1Id].push_back(Edge(&vertices[node1Id], weight, &vertices[node2Id]));
-  this->adjacencyList[node2Id].push_back(Edge(&vertices[node2Id], weight, &vertices[node1Id]));
+  this->adjacencyList[node1Id].push_back(std::shared_ptr<Edge>(new Edge(vertices[node1Id], weight, vertices[node2Id])));
+  this->adjacencyList[node2Id].push_back(std::shared_ptr<Edge>(new Edge(vertices[node2Id], weight, vertices[node1Id])));
 }
 
-void printAdajcencyList(std::vector<Edge>* adjList, uint32_t numberOfNodes) {
+void printAdajcencyList(std::vector<std::shared_ptr<Edge>>* adjList, uint32_t numberOfNodes) {
   for (uint32_t i = 0; i < numberOfNodes; ++i) {
     std::cout << "node "<< i << std::endl;
     std::cout << "\t";
-    for (const Edge& e: adjList[i]) {
-      std::cout << e.end->id << " cost(" << e.weight << ")";
-      if (e.weight == 0)
+    for (const std::shared_ptr<Edge>& e: adjList[i]) {
+      std::cout << e->end->id << " cost(" << e->weight << ")";
+      if (e->weight == 0)
         std::cout << "*** ";
       else
         std::cout << " ";
@@ -215,13 +198,14 @@ void printAdajcencyList(std::vector<Edge>* adjList, uint32_t numberOfNodes) {
   }
 }
 
+
 void Graph::printAdajcencyListFromGraph() {
   for (uint32_t i = 0; i < numberOfNodes; ++i) {
-    std::cout << "node " << vertices[i].id << std::endl;
+    std::cout << "node " << vertices[i]->id << std::endl;
     std::cout << "\t";
-    for (const Edge& e: adjacencyList[i]) {
-      std::cout << e.end->id << " cost(" << e.weight << ")";
-      if (e.weight == 0)
+    for (const std::shared_ptr<Edge>& e: adjacencyList[i]) {
+      std::cout << e->end->id << " cost(" << e->weight << ")";
+      if (e->weight == 0)
         std::cout << "*** ";
       else
         std::cout << " ";
@@ -234,24 +218,24 @@ void Graph::printAdajcencyListFromGraph() {
 Lists should have the same number of vectors.
 @return returns true if they are different
 */
-bool compareAdajcencyLists(std::vector<Edge>* adjList1, std::vector<Edge>* adjList2, uint32_t listSize) {
+bool compareAdajcencyLists(std::vector<std::shared_ptr<Edge>>* adjList1, std::vector<std::shared_ptr<Edge>>* adjList2, uint32_t listSize) {
   for (uint32_t i = 0; i < listSize; ++i) {
     if (adjList1[i].size() != adjList2[i].size()) {
       std::cout << "Different number of elementsa at "<< i << std::endl;
       for (uint32_t j = 0; j < adjList1[i].size(); ++j)
-        std::cout << adjList1[i].at(j).end->id << ",";
+        std::cout << adjList1[i].at(j)->end->id << ",";
       std::cout << std::endl;
       for (uint32_t j = 0; j < adjList2[i].size(); ++j)
-        std::cout << adjList2[i].at(j).end->id << ",";
+        std::cout << adjList2[i].at(j)->end->id << ",";
       std::cout << std::endl;
       return true;
     } else {
       for (uint32_t j = 0; j < adjList1[i].size(); ++j) {
-        if (adjList1[i].at(j).end != adjList2[i].at(j).end && adjList1[i].at(j).end != adjList2[i].at(j).end)
+        if (adjList1[i].at(j)->end != adjList2[i].at(j)->end && adjList1[i].at(j)->end != adjList2[i].at(j)->end)
         {
           std::cout << "Difference in row " << i << " at element "<< j << " of value: "
-            << adjList1[i].at(j).start->id << ","<< adjList1[i].at(j).end->id << " vs "
-            << adjList2[i].at(j).start->id << ","<< adjList2[i].at(j).end->id  << std::endl;
+            << adjList1[i].at(j)->start->id << ","<< adjList1[i].at(j)->end->id << " vs "
+            << adjList2[i].at(j)->start->id << ","<< adjList2[i].at(j)->end->id  << std::endl;
           return true;
         }
       }
@@ -277,19 +261,18 @@ std::vector<uint32_t> Graph::generateTerminals(uint32_t numberOfTerminals) {
 }
 
 void Graph::bfs() {
-  std::queue<Node*> toVisit;
-  Node * currentNode = &vertices[0];
+  std::queue<std::shared_ptr<Node>> toVisit;
+  std::shared_ptr<Node> currentNode(vertices[0]);
   toVisit.push(currentNode);
   while (!toVisit.empty()) {
     currentNode = toVisit.front();
     toVisit.pop();
     currentNode->visited = true;
     for (const auto& edge : adjacencyList[currentNode->id]) {
-      if(!edge.end->visited) {
-        toVisit.push(edge.end);
-        edge.end->visited = true;
+      if(!edge->end->visited) {
+        toVisit.push(edge->end);
+        edge->end->visited = true;
       }
-      //printVisitedStatus();
     }
   }
 } 
@@ -297,13 +280,14 @@ void Graph::bfs() {
 /*
 copies adjlist of a graph to given copyOfAdjacencyList
 */
-void Graph::copyAdjacencyList(std::vector<Edge>* copyOfAdjacencyList) {
+void Graph::copyAdjacencyList(std::vector<std::shared_ptr<Edge>>*& copyOfAdjacencyList) {
   for (uint32_t i = 0; i < numberOfNodes; ++i) 
-    for (const Edge& edge : adjacencyList[i]) {
-      Node* start = &vertices[edge.start->id];  
-      Node* end = &vertices[edge.end->id];      
-      Edge copyOfEdge(start, edge.weight, end, edge.pred, edge.succ);
-      copyOfAdjacencyList[i].push_back(copyOfEdge);
+    for (const std::shared_ptr<Edge>& edge : adjacencyList[i]) {
+      std::shared_ptr<Node> start(vertices[edge->start->id]);
+      std::shared_ptr<Node> end(vertices[edge->end->id]);
+      // Edge copyOfEdge = new Edge(start, edge.weight, end, edge.pred, edge.succ);
+      std::shared_ptr<Edge> copyOfEdgePtr(new Edge(start, edge->weight, end, edge->pred, edge->succ));// = &copyOfEdge;
+      copyOfAdjacencyList[i].push_back(copyOfEdgePtr);
     }
 }
 
@@ -311,86 +295,25 @@ void Graph::copyAdjacencyList(std::vector<Edge>* copyOfAdjacencyList) {
 Resets all non zero edges to edges from adjacencyList.
 For Edges with weight == 0 we reset: visited(end and start), pred, succ
 */
-void resetCopyOfAdjacencyList(std::vector<Edge>*& localCopyOfAdjacencyList, Graph * g) {
+void resetCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList, Graph * g) {
   for (uint32_t i = 0; i < g->numberOfNodes; ++i) {
     for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
-      if (localCopyOfAdjacencyList[i].at(j).weight)
-      // { // if non zero edge - reset it to default (adjacencyList value)
-        // Edge * pred = localCopyOfAdjacencyList[i].at(j).pred;
-        // Edge * succ = localCopyOfAdjacencyList[i].at(j).succ;
-        localCopyOfAdjacencyList[i].at(j).weight = g->adjacencyList[i].at(j).weight; //TODO: does it work as intended?
-        // localCopyOfAdjacencyList[i].at(j).pred = pred;
-        // localCopyOfAdjacencyList[i].at(j).succ = succ;
-      // } else { // weight == 0 aka edge in tree
-      //   // Edge * pred = &localCopyOfAdjacencyList[i].at(j);
-      //   // localCopyOfAdjacencyList[i].at(j).pred = pred;//nullptr // TODO: is this correct way to do this?
-      //   // localCopyOfAdjacencyList[i].at(j).succ = nullptr;
-      // }
-      localCopyOfAdjacencyList[i].at(j).end->visited = false;
-      localCopyOfAdjacencyList[i].at(j).start->visited = false;
+      if (localCopyOfAdjacencyList[i].at(j)->weight)
+        localCopyOfAdjacencyList[i].at(j)->weight = g->adjacencyList[i].at(j)->weight;
+      localCopyOfAdjacencyList[i].at(j)->end->visited = false;
+      localCopyOfAdjacencyList[i].at(j)->start->visited = false;
     }
   }
-}
-
-/*
-TODO: CHECK IF WORKS CORRECTLY
-Return array of Edges with non empty fields passed to second parameter.
-*/
-void cropArraytoVector(Edge* * tmptreeEdges, std::vector<Edge>& vec, uint32_t treeSize) {
-  for (uint32_t i = 0; i < treeSize; ++i)
-    vec.push_back((*tmptreeEdges)[i]);
-}
-
-//TODO two functions below: check if it should be as pointer or as a value
-
-/*
-TODO: CHECK IF WORKS CORRECTLY
-Return array of Edges with non empty fields passed to second parameter.
-*/
-void cropArray(Edge* * tmptreeEdges, Edge* *treeEdges, uint32_t treeSize) {
-  for (uint32_t i = 0; i < treeSize; ++i)
-    *(treeEdges)[i] = *(tmptreeEdges)[i];
-}
-/*
-Returns array of Nodes from array of Edges (pass number of edges as treeSize, function knows that |V| = |E| + 1)
-*/
-// Node * getNodesFromEdges(std::vector<Edge> treeEdges, uint32_t treeSize) {
-//   Node * nodeArray = new Node[treeSize + 1];
-//   nodeArray[0] = *treeEdges.at(0).start;
-//   for (uint32_t i = 0; i < treeSize; ++i)
-//     nodeArray[i + 1] = *treeEdges.at(i).end;
-//   return nodeArray;
-// }
-
-/*
-Returns array of Nodes from array of Edges. treeSize is number of edges
-*/
-uint32_t getNodesFromEdges(std::vector<Edge> treeEdges, Node ** &treeNodes, uint32_t treeSize) {
-  uint32_t currentNumberOfNodes = 0;
-  for (uint32_t i = 0; i < treeSize; ++i) {
-    if (findInArray(treeEdges.at(i).start->id, *treeNodes, currentNumberOfNodes) == -1) {
-      treeNodes[currentNumberOfNodes] = treeEdges.at(i).start;
-      std::cout << treeNodes[currentNumberOfNodes]->id << ", ";
-      ++currentNumberOfNodes;
-    }
-    if (findInArray(treeEdges.at(i).end->id, *treeNodes, currentNumberOfNodes) == -1) {
-      treeNodes[currentNumberOfNodes] = treeEdges.at(i).end;
-      std::cout << treeNodes[currentNumberOfNodes]->id << ", ";
-      ++currentNumberOfNodes;
-    }
-  }
-  std::cout << std::endl;
-  return currentNumberOfNodes;
 }
 
 /*
 Finds both instances of edge and updates their weights.
 */
-void updateWeight(Edge * e, uint32_t weight, std::vector<Edge>* adjList) {
+void updateWeight(std::shared_ptr<Edge> e, uint32_t weight, std::vector<std::shared_ptr<Edge>>*& adjList) {
   e->weight = weight;
-  Edge * edge = findEdge(e->end->id, e->start->id, adjList);
+  std::shared_ptr<Edge> edge = findEdge(e->end->id, e->start->id, adjList);
   if (edge == nullptr) {
-    std::cout << "Couldn't find edge: "; printEdge(*e);
+    std::cout << "Couldn't find edge: "; printEdge(e);
   } else {
     edge->weight = weight;
   }
@@ -399,63 +322,45 @@ void updateWeight(Edge * e, uint32_t weight, std::vector<Edge>* adjList) {
 /*
 Finds both instances of edge and updates their pred.
 */
-void updatePred(Edge * e, Edge * pred, std::vector<Edge>* adjList) {
+void updatePred(std::shared_ptr<Edge> e, std::shared_ptr<Edge> pred, std::vector<std::shared_ptr<Edge>>* adjList) {
   e->pred = pred;
-  findEdge(e->end->id, e->start->id, adjList)->pred = pred;
+  std::shared_ptr<Edge> e2 = findEdge(e->end->id, e->start->id, adjList);
+  if (e2 != nullptr) {
+    e2->pred = pred;
+  } else {
+    std::cout << "Edge not found, cannot set pred." << std::endl;
+  }
 }
 
 /*
 Finds both instances of edge and creates pred loop.
 */
-void updatePredToLoop(Edge * e, std::vector<Edge>* adjList) {
+void updatePredToLoop(std::shared_ptr<Edge> e, std::vector<std::shared_ptr<Edge>>* adjList) {
   e->pred = e;
-  Edge * e2 = findEdge(e->end->id, e->start->id, adjList);
-  e2->pred = e2;
+  std::shared_ptr<Edge> e2 = findEdge(e->end->id, e->start->id, adjList);
+  if (e2 != nullptr) {
+    e2->pred = e2;
+  } else {
+    std::cout << "Edge not found, cannot set pred." << std::endl;
+  }
 }
 
 /*
-Finds both instances of edge and updates their succ.
+Searches neighbourhood of node at nodeIndex, adds it to toVisitupdatePred
 */
-void updateSucc(Edge * e, Edge * succ, std::vector<Edge>* adjList) {
-  e->succ = succ;
-  findEdge(e->end->id, e->start->id, adjList)->succ = succ;
-}
-
-// /*
-// Searches neighbourhood of node at nodeIndex, adds it to toVisit
-// */
-// void searchNeighbours(std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> &toVisit, std::vector<Edge>* &localCopyOfAdjacencyList, uint32_t nodeIndex, Edge * currentEdge) {
-//   // for (Edge edge : localCopyOfAdjacencyList[nodeIndex]) {
-//   for (uint32_t i = 0; i < localCopyOfAdjacencyList[nodeIndex].size(); ++i) {
-//     Edge * edge = &localCopyOfAdjacencyList[nodeIndex].at(i);
-//     if (edge->weight) // normal procedure
-//       updatePred(edge, currentEdge, localCopyOfAdjacencyList);
-//     else // if it's 0 it's part of a tree
-//       updatePredToLoop(edge, localCopyOfAdjacencyList);
-//     updateWeight(edge, (edge->weight + currentEdge->weight), localCopyOfAdjacencyList);
-//     if (edge == nullptr) {
-//       printEdge(edge);
-//     }
-//     toVisit.push(edge);
-//   }
-// }
-
-/*
-Searches neighbourhood of node at nodeIndex, adds it to toVisit
-*/
-void searchNeighbours(std::priority_queue<Edge, std::vector<Edge>, EdgeWeightComparator> &toVisit, std::vector<Edge>* &localCopyOfAdjacencyList, uint32_t nodeIndex, Edge * currentEdge) {
-  // for (Edge edge : localCopyOfAdjacencyList[nodeIndex]) {
+void searchNeighbours(std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> &toVisit, std::vector<std::shared_ptr<Edge>>* &localCopyOfAdjacencyList, uint32_t nodeIndex, std::shared_ptr<Edge> currentEdge) {
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[nodeIndex].size(); ++i) {
-    Edge * edge = &localCopyOfAdjacencyList[nodeIndex].at(i);
+    std::shared_ptr<Edge> edge = localCopyOfAdjacencyList[nodeIndex].at(i);
     if (edge->weight) // normal procedure
       updatePred(edge, currentEdge, localCopyOfAdjacencyList);
     else // if it's 0 it's part of a tree
       updatePredToLoop(edge, localCopyOfAdjacencyList);
     updateWeight(edge, (edge->weight + currentEdge->weight), localCopyOfAdjacencyList);
     if (edge == nullptr) {
-      printEdge(edge);
+      std::cout << "Null edge detected in searchNeighbours" << std::endl;
+    } else {
+      toVisit.push(edge);
     }
-    toVisit.push(edge);
   }
 }
 
@@ -502,23 +407,23 @@ std::vector<uint32_t> tmpPseudoEdgeReturnUniqueNumbers(std::vector<PseudoEdge> v
   return v;
 }
 
-void addTotmptreeEdgesIfNotAlreadyIn(std::vector<PseudoEdge>& tmptreeEdges, Edge * edg, uint32_t& treeSize) {
+void addTotmptreeEdgesIfNotAlreadyIn(std::vector<PseudoEdge>& tmptreeEdges, std::shared_ptr<Edge> edg, uint32_t& treeSize) {
   if (findInTmpTree(edg->start->id, edg->end->id, tmptreeEdges) == -1) {
-    std::cout << "added " << std::endl;
-    printEdge(*edg);
+    // std::cout << "added " << std::endl;
+    // printEdge(edg);
     tmptreeEdges.push_back(PseudoEdge(edg->start->id, edg->end->id, edg->weight));
     ++treeSize;
-    tmpPseudoEdgePrintVec(tmptreeEdges);
   }
 }
 
 /*
 Maybe add field to the Edge - isNULL?
 */
-Edge * findZeroEdgeInAdjacentTo(uint32_t uniqueNodes, std::vector<Edge>* localCopyOfAdjacencyList) {
+std::shared_ptr<Edge> findZeroEdgeInAdjacentTo(uint32_t uniqueNodes, std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList) {
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[uniqueNodes].size(); ++i)
-    if (localCopyOfAdjacencyList[uniqueNodes].at(i).weight == 0)
-      return &localCopyOfAdjacencyList[uniqueNodes].at(i);
+    if (localCopyOfAdjacencyList[uniqueNodes].at(i)->weight == 0)
+      return localCopyOfAdjacencyList[uniqueNodes].at(i);
+  std::cout << "ERR findZeroEdgeInAdjacentTo returns nullptr " << std::endl;
   return nullptr;
 }
 
@@ -540,151 +445,89 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
   for (uint32_t i = 0; i < terminals.size(); ++i)
     originalTerminals.push_back(terminals.at(i));
 
-  std::cout << "Original terminals: ";
-  for (uint32_t i = 0; i < originalTerminals.size(); ++i)
-    std::cout << originalTerminals.at(i) << ", ";
-  std::cout << std::endl;
-
   //init
   resetVisitedStatus();
-  std::vector<Edge>* localCopyOfAdjacencyList = new std::vector<Edge>[numberOfNodes];
+  std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
   copyAdjacencyList(localCopyOfAdjacencyList);
 
   printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
 
-  std::vector<PseudoEdge> tmptreeEdges;//[numberOfNodes - 1]; // no chyba nie tyle I guess ale maxymalnie tyle
+  std::vector<PseudoEdge> tmptreeEdges;
 
   uint32_t treeSize = 0;
   bool foundTerminal = false;
-  // std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> toVisit;
-  std::priority_queue<Edge, std::vector<Edge>, EdgeWeightComparator> toVisit;
+  std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> toVisit;
 
-  // for (Edge& edge : localCopyOfAdjacencyList[terminals.at(0)]) {
-  for (uint32_t i = 0; i < localCopyOfAdjacencyList[terminals.at(0)].size(); ++i) {
-    Edge * edge = &localCopyOfAdjacencyList[terminals.at(0)].at(i);
-    printEdge(edge);
-    toVisit.push(edge);
-  }
-  vertices[terminals.at(0)].visited = true;
+  for (uint32_t i = 0; i < localCopyOfAdjacencyList[terminals.at(0)].size(); ++i)
+    toVisit.push(localCopyOfAdjacencyList[terminals.at(0)].at(i));
+
+  vertices[terminals.at(0)]->visited = true;
   terminals.erase(terminals.begin());
 
-  do { //TMP NOTE - should be 9
-    std::cout << "dbg8 " << std::endl;
+  do {
     if (compareAdajcencyLists(adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
       std::cout << "Comparing Adajcency Lists Failed" << std::endl;
       return dummyGraph();
     }
-    std::cout << "dbg9 " << std::endl;
 
     if (foundTerminal) {
-      while(!toVisit.empty()) {
-        std::cout << "foundTerminal removal" << std::endl;
-        printEdge(toVisit.top());
+      while(!toVisit.empty())
         toVisit.pop();
-      }
-
-      std::cout << "dbg10 " << std::endl;
-      tmpPseudoEdgePrintVec(tmptreeEdges);
-      std::cout << "dbg11 " << std::endl;
 
       uint32_t currentNumberOfNodes = tmpPseudoEdgeFindUniqueNumbers(tmptreeEdges);
       std::vector<uint32_t> uniqueNodes = tmpPseudoEdgeReturnUniqueNumbers(tmptreeEdges);
       std::cout << "currentNumberOfNodes " << currentNumberOfNodes << std::endl;
       std::cout << "debug tsize " << treeSize << std::endl;
-      printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
       for (uint32_t i = 0; i < uniqueNodes.size(); ++i) {
-        Edge * e = findZeroEdgeInAdjacentTo(uniqueNodes.at(i), localCopyOfAdjacencyList);
+        std::shared_ptr<Edge> e = findZeroEdgeInAdjacentTo(uniqueNodes.at(i), localCopyOfAdjacencyList);
         if (e == nullptr) {
           std::cout << "e doesnt exit aka no neighbour with 0 weight for node "<< uniqueNodes.at(i) << std::endl;
           return dummyGraph();
         }
         searchNeighbours(toVisit, localCopyOfAdjacencyList, uniqueNodes.at(i), e);
-        std::cout << "dbg11.1 " << std::endl;
         e = nullptr;
-        std::cout << "dbg11.2 " << std::endl;
       }
-      std::cout << "dbg12 " << std::endl;
       foundTerminal = false;
     }
 
     //main loop
     while(!foundTerminal) { // O(n^2)
-      std::cout << "terminals.size() " << terminals.size() << std::endl;
-      std::cout << "toVisit.size() " << toVisit.size() << std::endl;
       //remoeve all edges that lead to already visited nodes
       if (!toVisit.empty())
-        while (toVisit.top()->end->visited || toVisit.top() == nullptr) {
-        // while (toVisit.top()->end->visited) {
-          printEdge(toVisit.top());
+        while (toVisit.top() == nullptr || toVisit.top()->end->visited)
           toVisit.pop();
-        }
 
       if (toVisit.empty()) {
         std::cout << "End in loop Dijkstra; dummy graph" << std::endl;
         return dummyGraph();
       }
-      std::cout << "H1 " << terminals.size() << std::endl;
-
-      Edge * e = toVisit.top();
+      std::shared_ptr<Edge> e = toVisit.top();
       toVisit.pop();
       e->end->visited = true;
       uint32_t nextNodeIndex = e->end->id;
 
       // check if we have found terminal
       int32_t idx = findInVector(nextNodeIndex, terminals);
-      std::cout << "WTF idx:" << idx << std::endl;
-      printEdge(*e);
       if (idx > -1) {
         foundTerminal = true;
         //remove found terminal from the list
         terminals.erase(terminals.begin() + idx);
-
-        /*
-        AT THIS POINT
-        1. zero the path
-        2.  a) reset all weights != 0
-            b) reset all visited status
-            c) reset all pred
-            d) reset all succc
-        3. Reset Queue
-        4. Rerun algorithm with new local adjacencyList (changed in 1. and 2.)
-        */
-        Edge * oldPred = e->pred;
-        printEdge(*findEdge(e->start->id, e->end->id, adjacencyList));
-        std::cout << "dbg1 " << std::endl;
+        std::shared_ptr<Edge> oldPred = e->pred;
         updateWeight(e, 0, localCopyOfAdjacencyList);
         updatePredToLoop(e, localCopyOfAdjacencyList);
-        std::cout << "dbg2 " << std::endl;
-        Edge * edg = findEdge(e->start->id, e->end->id, adjacencyList);
+        std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
         addTotmptreeEdgesIfNotAlreadyIn(tmptreeEdges, edg, treeSize);
 
         // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
-        // while (e->pred != nullptr && e->pred->start->id != e->start->id) {
         while (oldPred != nullptr && oldPred->start->id != e->start->id) {
-          std::cout << "dbg3 " << std::endl;
           e = oldPred;
           oldPred = e->pred;
-          printEdge(*findEdge(e->start->id, e->end->id, adjacencyList));
           updateWeight(e, 0, localCopyOfAdjacencyList);
           updatePredToLoop(e, localCopyOfAdjacencyList);
-          std::cout << "dbg4 " << std::endl;
-          Edge * edg = findEdge(e->start->id, e->end->id, adjacencyList);
+          std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
           addTotmptreeEdgesIfNotAlreadyIn(tmptreeEdges, edg, treeSize);
-          std::cout << "dbg5 " << std::endl;
-          printEdge(*e);
         } // untill we reach beginning of the path
-// Original terminals: x38, 19, 9, 28, 13, x7, x11, 14, 34, 33,
-        std::cout << "dbg6 " << std::endl;
-        // std::cout << "AAAAAAAAAAAAAAAAAA" << std::endl;
-
-        // printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
         resetCopyOfAdjacencyList(localCopyOfAdjacencyList, this);
-        // printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
-
-
-        std::cout << "dbg7 " << std::endl;
-        // oldPred = nullptr;
-        // e = nullptr;
       } else { // aka terminal not found
         searchNeighbours(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
       }
@@ -694,8 +537,7 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
   uint64_t totalWeight = 0;
   for (uint32_t i = 0; i < treeSize; ++i)
     totalWeight += tmptreeEdges.at(i).weight;
-  //TODO: print edges in separate function
-  // print edges
+
   if (printFlag && numberOfNodes < 1000) {
     std::cout << "Edges in  tmptreeEdges: " << std::endl;
     for (uint32_t i = 0; i < treeSize; ++i)
@@ -712,7 +554,6 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
     bool found = false;
     for (uint32_t j = 0; j < treeSize; ++j) {
       if (originalTerminals.at(i) == tmptreeEdges.at(j).start || originalTerminals.at(i) == tmptreeEdges.at(j).end) {
-          std::cout << "found: " << originalTerminals.at(i) << std::endl;
         found = true;
         break;
       }
@@ -723,30 +564,30 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
     }
   }
   std::cout << std::endl;
-//Original terminals: x27, 6, x28, x13, x12, x33, x7, x36, x10, x37,
   std::vector<uint32_t> nodes = tmpPseudoEdgeReturnUniqueNumbers(tmptreeEdges);
-  std::vector<Edge *> treeEdges;
+  std::vector<std::shared_ptr<Edge>> treeEdges;
   for (uint32_t i = 0; i < tmptreeEdges.size(); ++i) {
-    Edge * e = findEdge(tmptreeEdges.at(i).start, tmptreeEdges.at(i).end, adjacencyList);
+    std::shared_ptr<Edge> e = findEdge(tmptreeEdges.at(i).start, tmptreeEdges.at(i).end, adjacencyList);
     if (e == nullptr) {
       std::cout << "missing: " << tmptreeEdges.at(i).start << " - " << tmptreeEdges.at(i).end << std::endl;
     }
-    printEdge(*e);
-    tmpPseudoEdgePrint(tmptreeEdges.at(i));
     treeEdges.push_back(e);
   }
   std::cout << "tmptreeEdges.size() " << tmptreeEdges.size() << " treeSize " << treeSize << std::endl;
-  // getNodesFromEdges(treeEdges, &treeNodes, treeSize);
   Graph steinerTree = Graph(treeEdges, nodes, nodes.size(), tmptreeEdges.size(), printFlag);
-  // Graph steinerTree = dummyGraph();
 
   std::cout << "dupa 321" << std::endl;
+  for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
+    std::cout << "v["<< i <<"]= "  << steinerTree.vertices[i]->id << std::endl;
+  std::cout << "dupa 321" << std::endl;
 
-  delete[] localCopyOfAdjacencyList;
+  //TODO NIE DELETOWAC ALE TRZEBA
+  // delete[] localCopyOfAdjacencyList;
   // localCopyOfAdjacencyList = nullptr;
+
+  for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
+    std::cout << "v["<< i <<"]= "  << steinerTree.vertices[i]->id << std::endl;
   std::cout << "dupa 321" << std::endl;
-
-
   return steinerTree;
 }
 
@@ -758,12 +599,12 @@ Repeat step 2 (until all vertices are in the tree).
 Graph Graph::PrimMST() // do it with priority Queue, maybe my own immplementation?
 {
   resetVisitedStatus();
-  std::priority_queue<Edge *, std::vector<Edge *>, EdgeWeightComparatorOnPointers> toVisit;
-  for (Edge& edge : adjacencyList[0]) //init 
-    toVisit.push(&edge);
-  vertices[0].visited = true;
+  std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> toVisit;
+  for (std::shared_ptr<Edge>& edge : adjacencyList[0]) //init
+    toVisit.push(edge);
+  vertices[0]->visited = true;
   
-  Edge * tmptreeEdges[numberOfNodes - 1];
+  std::shared_ptr<Edge> tmptreeEdges[numberOfNodes - 1];
   uint64_t totalWeight = 0;
   for (uint32_t treeSize = 0; treeSize < numberOfNodes - 1; ++treeSize)
   {
@@ -775,16 +616,16 @@ Graph Graph::PrimMST() // do it with priority Queue, maybe my own immplementatio
       std::cout << "End in loop PimMST; dummy graph" << std::endl;
       return dummyGraph();
     }
-    Edge * e = toVisit.top();
+    std::shared_ptr<Edge> e = toVisit.top();
     tmptreeEdges[treeSize] = e;
     toVisit.pop();
     e->end->visited = true;
     uint32_t nextNodeIndex = e->end->id;
-    for (Edge& edge : adjacencyList[nextNodeIndex])
+    for (std::shared_ptr<Edge>& edge : adjacencyList[nextNodeIndex])
     {
-      if (!edge.end->visited)
+      if (!edge->end->visited)
       {
-        toVisit.push(&edge);
+        toVisit.push(edge);
       }
     }
     totalWeight += e->weight;
@@ -807,39 +648,35 @@ void Graph::printData() {
   for (uint32_t i = 0; i < numberOfNodes; ++i) {
     std::cout << "node " << i << " is connected to:\n\t"; 
     for (const auto& edge : adjacencyList[i]) {
-      std::cout << static_cast<uint32_t>(edge.end->id) << " cost(" << edge.weight << ") "; 
-      if(edge.weight == 0)
+      std::cout << static_cast<uint32_t>(edge->end->id) << " cost(" << edge->weight << ") ";
+      if(edge->weight == 0)
         std::cout << "ERROR;";
     }
     std::cout << std::endl;
   }
 }
 
-bool Graph::isConnected()
-{
+bool Graph::isConnected() {
   bfs();
   for (uint32_t i = 0; i < numberOfNodes; ++i)
-    if (!vertices[i].visited)
+    if (!vertices[i]->visited)
       return false;
   return true;
 }
 
-void Graph::resetVisitedStatus()
-{
+void Graph::resetVisitedStatus() {
   for (uint32_t i = 0; i < numberOfNodes; ++i)
-    vertices[i].visited = false;
+    vertices[i]->visited = false;
 }
 
-void Graph::printVisitedStatus()
-{
+void Graph::printVisitedStatus() {
   for (uint32_t i = 0; i < numberOfNodes; ++i)
-    std::cout << "node " << i << " visited = " << vertices[i].visited << std::endl;
+    std::cout << "node " << i << " visited = " << vertices[i]->visited << std::endl;
 }
 
-bool Graph::checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id) 
-{
+bool Graph::checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id) {
   for (const auto& edge : adjacencyList[node1Id])
-    if (edge.end->id == node2Id)
+    if (edge->end->id == node2Id)
       return true;
   return false;
 }
@@ -865,6 +702,8 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   {
     graph.printData();
   }
+    std::cout << "dupa" << std::endl;
+
   if(graph.isConnected()) {
     std::cout << "Graph is connected" << std::endl;
   } else {
@@ -872,9 +711,14 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     //TMP SOLUTION
     return;
   }
+      std::cout << "dupa" << std::endl;
+
   graph.resetVisitedStatus();
   Graph mst = graph.PrimMST();
   graph.resetVisitedStatus();
+        std::cout << "d2314upa" << std::endl;
+
+  mst.printAdajcencyListFromGraph();
 
   //TODO: maybe make them not random?
   //TMP SOLUTION
@@ -888,7 +732,7 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   std::cout << "steinerTree.numberOfNodes " << steinerTree.numberOfNodes << std::endl;
   std::cout << "steinerTree.numberOfEdges " << steinerTree.numberOfEdges << std::endl;
   for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
-    std::cout << "v["<< i <<"]= "  << steinerTree.vertices[i].id << std::endl;
+    std::cout << "v["<< i <<"]= "  << steinerTree.vertices[i]->id << std::endl;
   std::cout << "dupa" << std::endl;
   std::cout << "steinerTree.adjacencyList[0].size() " << steinerTree.adjacencyList[0].size() << std::endl;
   std::cout << "graph.adjacencyList[0].size() " << graph.adjacencyList[0].size() << std::endl;

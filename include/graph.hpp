@@ -10,26 +10,22 @@ class Graph {
 
   public:
     uint32_t numberOfNodes;
-    Node * vertices;
+    std::shared_ptr<Node>* vertices;
     uint32_t numberOfEdges;
-    std::vector<Edge>* adjacencyList;
+    std::vector<std::shared_ptr<Edge>>* adjacencyList;
     bool printFlag;
     void bfs();
     void printAdajcencyListFromGraph();
     //prev private above
 
-
-
     Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
-    Graph(std::vector<Edge *> edges, std::vector<uint32_t> nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
-    Graph(Edge * edges, Node* * nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
+    Graph(std::vector<std::shared_ptr<Edge>> edges, std::vector<uint32_t> nodes, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag);
     ~Graph();
 
     void addEdge(uint32_t node1Id, uint32_t node2Id);
     void printData();
     bool checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id);
-    void copyAdjacencyList(std::vector<Edge>*  copyOfAdjacencyList);
-    // Edge* findEdge(uint32_t edgeStart, uint32_t edgeEnd);
+    void copyAdjacencyList(std::vector<std::shared_ptr<Edge>>*&  copyOfAdjacencyList);
     std::vector<uint32_t> generateTerminals(uint32_t numberOfTerminals);
 
     bool isConnected();
