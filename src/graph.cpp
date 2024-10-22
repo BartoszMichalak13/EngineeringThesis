@@ -165,9 +165,9 @@ Graph::Graph(std::vector<std::shared_ptr<Edge>> edges, std::vector<uint32_t> nod
 
 Graph::~Graph() {
   delete[] adjacencyList;
-  // adjacencyList = nullptr;
+  adjacencyList = nullptr;
   delete[] vertices;
-  // vertices = nullptr;
+  vertices = nullptr;
 }
 
 Graph dummyGraph() {
@@ -290,8 +290,8 @@ void Graph::copyAdjacencyList(std::vector<std::shared_ptr<Edge>>*& copyOfAdjacen
       std::shared_ptr<Node> start(vertices[edge->start->id]);
       std::shared_ptr<Node> end(vertices[edge->end->id]);
       // Edge copyOfEdge = new Edge(start, edge.weight, end, edge.pred, edge.succ);
-      std::shared_ptr<Edge> copyOfEdgePtr(new Edge(start, edge->weight, end, edge->pred, edge->succ));// = &copyOfEdge;
-      copyOfAdjacencyList[i].push_back(copyOfEdgePtr);
+      // std::shared_ptr<Edge> copyOfEdgePtr(new Edge(start, edge->weight, end, edge->pred, edge->succ));// = &copyOfEdge;
+      copyOfAdjacencyList[i].push_back(std::shared_ptr<Edge>(new Edge(start, edge->weight, end, edge->pred, edge->succ)));
     }
 }
 
@@ -478,10 +478,7 @@ std::shared_ptr<Graph> Graph::Dijkstra(std::vector<uint32_t> terminals) {// do i
       while(!toVisit.empty())
         toVisit.pop();
 
-      uint32_t currentNumberOfNodes = tmpPseudoEdgeFindUniqueNumbers(tmptreeEdges);
       std::vector<uint32_t> uniqueNodes = tmpPseudoEdgeReturnUniqueNumbers(tmptreeEdges);
-      std::cout << "currentNumberOfNodes " << currentNumberOfNodes << std::endl;
-      std::cout << "debug tsize " << treeSize << std::endl;
       for (uint32_t i = 0; i < uniqueNodes.size(); ++i) {
         std::shared_ptr<Edge> e = findZeroEdgeInAdjacentTo(uniqueNodes.at(i), localCopyOfAdjacencyList);
         if (e == nullptr) {
@@ -580,18 +577,18 @@ std::shared_ptr<Graph> Graph::Dijkstra(std::vector<uint32_t> terminals) {// do i
   std::cout << "tmptreeEdges.size() " << tmptreeEdges.size() << " treeSize " << treeSize << std::endl;
   std::shared_ptr<Graph> steinerTree(new Graph(treeEdges, nodes, nodes.size(), tmptreeEdges.size(), printFlag));
 
-  std::cout << "dupa 321" << std::endl;
-  for (uint32_t i = 0; i < steinerTree->numberOfNodes; ++i)
-    std::cout << "v["<< i <<"]= "  << steinerTree->vertices[i]->id << std::endl;
-  std::cout << "dupa 321" << std::endl;
-
-  //TODO NIE DELETOWAC ALE TRZEBA
+  for (uint32_t i = 0; i < numberOfNodes; ++i) {
+    for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
+      localCopyOfAdjacencyList[i].at(j)->start = nullptr;
+      localCopyOfAdjacencyList[i].at(j)->end = nullptr;
+      localCopyOfAdjacencyList[i].at(j)->pred = nullptr;
+      localCopyOfAdjacencyList[i].at(j)->succ = nullptr;
+    }
+    localCopyOfAdjacencyList[i].clear();
+  }
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;
 
-  for (uint32_t i = 0; i < steinerTree->numberOfNodes; ++i)
-    std::cout << "v["<< i <<"]= "  << steinerTree->vertices[i]->id << std::endl;
-  std::cout << "dupa 321" << std::endl;
   return steinerTree;
 }
 
@@ -706,52 +703,31 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   {
     graph.printData();
   }
-    std::cout << "dupa" << std::endl;
 
   if(graph.isConnected()) {
     std::cout << "Graph is connected" << std::endl;
   } else {
     std::cout << "Graph is NOT connected" << std::endl;
-    //TMP SOLUTION
     return;
   }
-      std::cout << "dupa" << std::endl;
-
   graph.resetVisitedStatus();
-  Graph mst = graph.PrimMST();
+  Graph mst = graph.PrimMST(); //dummy for now
   graph.resetVisitedStatus();
-        std::cout << "d2314upa" << std::endl;
 
   mst.printAdajcencyListFromGraph();
 
   //TODO: maybe make them not random?
   //TMP SOLUTION
   uint32_t numberOfTerminals = std::round(numberOfNodes / 4);
-  std::cout << "dupa" << std::endl;
   std::vector<uint32_t> terminals = graph.generateTerminals(numberOfTerminals);
-  std::cout << "dupa" << std::endl;
 
   // Graph steinerTree = graph.Dijkstra(terminals);
   std::shared_ptr<Graph> steinerTree(graph.Dijkstra(terminals));
-  std::cout << "dupa" << std::endl;
   std::cout << "steinerTree.numberOfNodes " << steinerTree->numberOfNodes << std::endl;
   std::cout << "steinerTree.numberOfEdges " << steinerTree->numberOfEdges << std::endl;
   for (uint32_t i = 0; i < steinerTree->numberOfNodes; ++i)
     std::cout << "v["<< i <<"]= "  << steinerTree->vertices[i]->id << std::endl;
-  std::cout << "dupa" << std::endl;
   std::cout << "steinerTree.adjacencyList[0].size() " << steinerTree->adjacencyList[0].size() << std::endl;
-  std::cout << "graph.adjacencyList[0].size() " << graph.adjacencyList[0].size() << std::endl;
-  graph.printAdajcencyListFromGraph();
-    std::cout << "dupa" << std::endl;
   steinerTree->printAdajcencyListFromGraph();
-  std::cout << "dupa" << std::endl;
 
-  for (uint32_t i = 0; i < steinerTree->numberOfNodes; ++i)
-    for (uint32_t j = 0; j < steinerTree->adjacencyList[i].size(); ++j) {
-      printEdge(steinerTree->adjacencyList[i].at(j));
-      printEdgePred(steinerTree->adjacencyList[i].at(j));
-    }
-  std::cout << "dupa" << std::endl;
 }
-
-
