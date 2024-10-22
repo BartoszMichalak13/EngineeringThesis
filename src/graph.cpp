@@ -174,6 +174,10 @@ Graph dummyGraph() {
   return Graph(0,0,0);
 }
 
+std::shared_ptr<Graph> dummySharedPointerGraph() {
+  return std::shared_ptr<Graph>(new Graph(0,0,0));
+}
+
 void Graph::addEdge(uint32_t node1Id, uint32_t node2Id) {
   // We choose them, so that they're smaller than numberOfNodes
   const uint32_t weight = randomGen.generateRandomNumber(1, maxEdgeWeight);
@@ -439,7 +443,7 @@ modify edges, give pointer to pred
 
 @param terminals should be of positive size
 */
-Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Queue, maybe my own immplementation?
+std::shared_ptr<Graph> Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Queue, maybe my own immplementation?
 
   std::vector<uint32_t> originalTerminals;
   for (uint32_t i = 0; i < terminals.size(); ++i)
@@ -467,7 +471,7 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
   do {
     if (compareAdajcencyLists(adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
       std::cout << "Comparing Adajcency Lists Failed" << std::endl;
-      return dummyGraph();
+      return dummySharedPointerGraph();
     }
 
     if (foundTerminal) {
@@ -482,7 +486,7 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
         std::shared_ptr<Edge> e = findZeroEdgeInAdjacentTo(uniqueNodes.at(i), localCopyOfAdjacencyList);
         if (e == nullptr) {
           std::cout << "e doesnt exit aka no neighbour with 0 weight for node "<< uniqueNodes.at(i) << std::endl;
-          return dummyGraph();
+          return dummySharedPointerGraph();
         }
         searchNeighbours(toVisit, localCopyOfAdjacencyList, uniqueNodes.at(i), e);
         e = nullptr;
@@ -499,7 +503,7 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
 
       if (toVisit.empty()) {
         std::cout << "End in loop Dijkstra; dummy graph" << std::endl;
-        return dummyGraph();
+        return dummySharedPointerGraph();
       }
       std::shared_ptr<Edge> e = toVisit.top();
       toVisit.pop();
@@ -574,19 +578,19 @@ Graph Graph::Dijkstra(std::vector<uint32_t> terminals) {// do it with priority Q
     treeEdges.push_back(e);
   }
   std::cout << "tmptreeEdges.size() " << tmptreeEdges.size() << " treeSize " << treeSize << std::endl;
-  Graph steinerTree = Graph(treeEdges, nodes, nodes.size(), tmptreeEdges.size(), printFlag);
+  std::shared_ptr<Graph> steinerTree(new Graph(treeEdges, nodes, nodes.size(), tmptreeEdges.size(), printFlag));
 
   std::cout << "dupa 321" << std::endl;
-  for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
-    std::cout << "v["<< i <<"]= "  << steinerTree.vertices[i]->id << std::endl;
+  for (uint32_t i = 0; i < steinerTree->numberOfNodes; ++i)
+    std::cout << "v["<< i <<"]= "  << steinerTree->vertices[i]->id << std::endl;
   std::cout << "dupa 321" << std::endl;
 
   //TODO NIE DELETOWAC ALE TRZEBA
-  // delete[] localCopyOfAdjacencyList;
-  // localCopyOfAdjacencyList = nullptr;
+  delete[] localCopyOfAdjacencyList;
+  localCopyOfAdjacencyList = nullptr;
 
-  for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
-    std::cout << "v["<< i <<"]= "  << steinerTree.vertices[i]->id << std::endl;
+  for (uint32_t i = 0; i < steinerTree->numberOfNodes; ++i)
+    std::cout << "v["<< i <<"]= "  << steinerTree->vertices[i]->id << std::endl;
   std::cout << "dupa 321" << std::endl;
   return steinerTree;
 }
@@ -727,24 +731,25 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   std::vector<uint32_t> terminals = graph.generateTerminals(numberOfTerminals);
   std::cout << "dupa" << std::endl;
 
-  Graph steinerTree = graph.Dijkstra(terminals);
+  // Graph steinerTree = graph.Dijkstra(terminals);
+  std::shared_ptr<Graph> steinerTree(graph.Dijkstra(terminals));
   std::cout << "dupa" << std::endl;
-  std::cout << "steinerTree.numberOfNodes " << steinerTree.numberOfNodes << std::endl;
-  std::cout << "steinerTree.numberOfEdges " << steinerTree.numberOfEdges << std::endl;
-  for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
-    std::cout << "v["<< i <<"]= "  << steinerTree.vertices[i]->id << std::endl;
+  std::cout << "steinerTree.numberOfNodes " << steinerTree->numberOfNodes << std::endl;
+  std::cout << "steinerTree.numberOfEdges " << steinerTree->numberOfEdges << std::endl;
+  for (uint32_t i = 0; i < steinerTree->numberOfNodes; ++i)
+    std::cout << "v["<< i <<"]= "  << steinerTree->vertices[i]->id << std::endl;
   std::cout << "dupa" << std::endl;
-  std::cout << "steinerTree.adjacencyList[0].size() " << steinerTree.adjacencyList[0].size() << std::endl;
+  std::cout << "steinerTree.adjacencyList[0].size() " << steinerTree->adjacencyList[0].size() << std::endl;
   std::cout << "graph.adjacencyList[0].size() " << graph.adjacencyList[0].size() << std::endl;
   graph.printAdajcencyListFromGraph();
     std::cout << "dupa" << std::endl;
-  steinerTree.printAdajcencyListFromGraph();
+  steinerTree->printAdajcencyListFromGraph();
   std::cout << "dupa" << std::endl;
 
-  for (uint32_t i = 0; i < steinerTree.numberOfNodes; ++i)
-    for (uint32_t j = 0; j < steinerTree.adjacencyList[i].size(); ++j) {
-      printEdge(steinerTree.adjacencyList[i].at(j));
-      printEdgePred(steinerTree.adjacencyList[i].at(j));
+  for (uint32_t i = 0; i < steinerTree->numberOfNodes; ++i)
+    for (uint32_t j = 0; j < steinerTree->adjacencyList[i].size(); ++j) {
+      printEdge(steinerTree->adjacencyList[i].at(j));
+      printEdgePred(steinerTree->adjacencyList[i].at(j));
     }
   std::cout << "dupa" << std::endl;
 }
