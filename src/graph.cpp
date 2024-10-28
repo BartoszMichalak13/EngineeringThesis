@@ -12,6 +12,9 @@
 //TODO remove treeSize?
 //TODO inline everything
 //TODO powrzucaj consty
+//TODO wszystkie uzycie adj powinny byc bezpieczne (tj bfs na steiner tree nie ma w adj[5] wierzcolka 5 itd)
+//TODO nazwy, ładne, czytelne, przenoszą sens
+//TOOD TakahashiMatsuyama returns 2 trees (tree is not connected)
 
 //coś z resetem pewnie, użyj emplace moze na priorty que (deprecated?)
 
@@ -92,7 +95,7 @@ void printEdge(std::shared_ptr<Edge> e) {
 /*
 returns index from vector which holds value
 */
-int32_t findInVector(uint32_t value, std::vector<uint32_t> vec) {
+int32_t findInUintVector(uint32_t value, std::vector<uint32_t> vec) {
   for (uint32_t i = 0; i < vec.size(); ++i)
     if (vec.at(i) == value)
       return i;
@@ -103,12 +106,34 @@ int32_t findInVector(uint32_t value, std::vector<uint32_t> vec) {
 /*
 returns index from vector which holds edge
 */
-int32_t findInVector(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>> vec) {
+int32_t findInEdgeVector(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>> vec) {
   for (uint32_t i = 0; i < vec.size(); ++i)
     if ((vec.at(i)->start == start && vec.at(i)->end == end) || (vec.at(i)->start == end && vec.at(i)->end == start))
       return i;
   return -1;
 }
+
+/*
+returns index from vector which holds edge
+*/
+std::shared_ptr<Edge> findInEdgeVectorAndReturnValue(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>> vec) {
+  for (uint32_t i = 0; i < vec.size(); ++i)
+    if ((vec.at(i)->start == start && vec.at(i)->end == end) || (vec.at(i)->start == end && vec.at(i)->end == start))
+      return vec.at(i);
+  return std::shared_ptr<Edge>(nullptr);
+}
+
+// /*
+// returns index from vector which holds edge
+// */
+// std::shared_ptr<Edge> findInVectorAndReturn(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>> vec) {
+//   for (uint32_t i = 0; i < vec.size(); ++i)
+//     if ((vec.at(i)->start == start && vec.at(i)->end == end) || (vec.at(i)->start == end && vec.at(i)->end == start))
+//       return vec.at(i);
+//   return std::shared_ptr<Edge>(nullptr);
+// }
+
+
 /*
 returns idex from array of Nodes which holds value
 */
@@ -150,6 +175,9 @@ Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
     vertices[i] = std::shared_ptr<Node>(new Node(i));
 }
 
+/*
+Used primarly in approxiamtion algorithms
+*/
 Graph::Graph(std::vector<uint32_t> nodes, std::vector<std::shared_ptr<Edge>> edges, uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
   this->printFlag = printFlag;
   this->numberOfNodes = numberOfNodes;
@@ -268,7 +296,7 @@ std::vector<uint32_t> Graph::generateTerminals(uint32_t numberOfTerminals) {
   uint32_t term = randomGen.generateRandomNumber(0, numberOfNodes - 1);
   terminals.push_back(term);
   for (uint32_t i = 1; i < numberOfTerminals; ++i) {
-    while (findInVector(term, terminals) > -1) {
+    while (findInUintVector(term, terminals) > -1) {
       term = randomGen.generateRandomNumber(0, numberOfNodes - 1);
     }
     terminals.push_back(term);
@@ -284,7 +312,8 @@ void Graph::bfs() {
     currentNode = toVisit.front();
     toVisit.pop();
     currentNode->visited = true;
-    for (const auto& edge : adjacencyList[currentNode->id]) {
+    int32_t idx = findInArray(currentNode->id, vertices, numberOfNodes);
+    for (const auto& edge : adjacencyList[idx]) {
       if(!edge->end->visited) {
         toVisit.push(edge->end);
         edge->end->visited = true;
@@ -301,8 +330,18 @@ void Graph::copyAdjacencyList(std::vector<std::shared_ptr<Edge>>*& copyOfAdjacen
     for (const std::shared_ptr<Edge>& edge : adjacencyList[i]) {
       std::shared_ptr<Node> start(vertices[edge->start->id]);
       std::shared_ptr<Node> end(vertices[edge->end->id]);
-      // Edge copyOfEdge = new Edge(start, edge.weight, end, edge.pred, edge.succ);
-      // std::shared_ptr<Edge> copyOfEdgePtr(new Edge(start, edge->weight, end, edge->pred, edge->succ));// = &copyOfEdge;
+      copyOfAdjacencyList[i].push_back(std::shared_ptr<Edge>(new Edge(start, edge->weight, end, edge->pred, edge->succ)));
+    }
+}
+
+/*
+copies adjlist of a graph to given copyOfAdjacencyList
+*/
+void copyAdjacencyListFromGraph(std::shared_ptr<Graph>& graph, std::vector<std::shared_ptr<Edge>>*& copyOfAdjacencyList) {
+  for (uint32_t i = 0; i < graph->numberOfNodes; ++i)
+    for (const std::shared_ptr<Edge>& edge : graph->adjacencyList[i]) {
+      std::shared_ptr<Node> start(graph->vertices[edge->start->id]);
+      std::shared_ptr<Node> end(graph->vertices[edge->end->id]);
       copyOfAdjacencyList[i].push_back(std::shared_ptr<Edge>(new Edge(start, edge->weight, end, edge->pred, edge->succ)));
     }
 }
@@ -519,7 +558,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
       uint32_t nextNodeIndex = e->end->id;
 
       // check if we have found terminal
-      int32_t idx = findInVector(nextNodeIndex, terminals);
+      int32_t idx = findInUintVector(nextNodeIndex, terminals);
       if (idx > -1) {
         foundTerminal = true;
         //remove found terminal from the list
@@ -561,7 +600,6 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
     std::cout << std::endl;
   }
   std::cout << "TakahashiMatsuyama totalWeight = " << totalWeight << std::endl;
-
   for (uint32_t i = 0; i < originalTerminals.size(); ++i) {
     bool found = false;
     for (uint32_t j = 0; j < treeSize; ++j) {
@@ -599,7 +637,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
   }
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;
-
+  resetVisitedStatus();
   return steinerTree;
 }
 
@@ -650,7 +688,71 @@ std::vector<std::shared_ptr<Edge>> Graph::ShortestPath(uint32_t node1, uint32_t 
       searchNeighbours(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
     }
   }
+  std::cerr << "Could not find path between node1 and node2" << std::endl;
+  return std::vector<std::shared_ptr<Edge>>(); //empty vec
 }
+
+//TODO WROOOOOOOONG WE HAVE TO FIND WHICH ROW HAS start->id AS VALUE!!!!!!!
+/*
+Removes single edge instance from adjacency list, used as helper function for removeEdgeFromAdjacencyList
+*/
+void removeSingeEdgeFromAdjacencyList(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>>*& adjList) {
+  std::shared_ptr<Edge> edge = findInEdgeVectorAndReturnValue(start, end, adjList[start->id]);
+  if (edge != nullptr){
+    adjList[start->id].erase(std::remove(adjList[start->id].begin(), adjList[start->id].end(), edge), adjList[start->id].end());
+  } else {
+    std::cerr << "Edge not found in removeFromAdjacencyList part" << std::endl;
+  }
+}
+
+/*
+Removes both instances of edge from adjacency list
+*/
+void removeEdgeFromAdjacencyList(std::shared_ptr<Edge> e, std::vector<std::shared_ptr<Edge>>*& adjList) {
+  removeSingeEdgeFromAdjacencyList(e->start, e->end, adjList);
+  removeSingeEdgeFromAdjacencyList(e->end, e->start, adjList);
+}
+
+/*
+Moves non empty vectors to free spaces in the front of the array
+*/
+void sortAdjacencyList(uint32_t currentAdjListSize, std::vector<std::shared_ptr<Edge>>*& adjList) {
+  //TODO ponder if optimizeable
+  for (uint32_t i = 0; i < currentAdjListSize; ++i) {
+    if (adjList[i].size() == 0) {
+      for (uint32_t j = i + 1; j < currentAdjListSize; ++j) {
+        if (adjList[j].size() != 0) {
+          //TODO ponder if it's safe
+          std::swap(adjList[i], adjList[j]);
+          break;
+        }
+      }
+    }
+  }
+}
+
+/*
+Adds node to given vector if it is not already in and increases counter
+*/
+void addNodeIfNotAlreadyIn(uint32_t nodeId, std::vector<uint32_t>& vec, uint32_t& counter) {
+  int32_t repetitionCheck = findInUintVector(nodeId, vec);
+  if (repetitionCheck == -1) {
+    vec.push_back(nodeId);
+    ++counter;
+  }
+}
+
+/*
+Adds edge to given vector if it is not already in and increases counter
+*/
+void addEdgeIfNotAlreadyIn(std::shared_ptr<Edge> edge, std::vector<std::shared_ptr<Edge>>& vec, uint32_t& counter) {
+  int32_t repetitionCheck = findInEdgeVector(edge->start, edge->end, vec);
+  if (repetitionCheck == -1) {
+    vec.push_back(edge);
+    ++counter;
+  }
+}
+
 //TODO na spokojnie sprawdz czy all pointery dzialaja tj, czy sa dobrze przepisywane
 /*
 1. Construct complete graph G_1 where V = terminals (Steiner Points), E = shortest paths between terminals
@@ -666,60 +768,116 @@ We may check basic algorithm and my changed version
 Most likely (almost obvoiusly) it will only change execution time, not resulting weight of Steiner Tree
 */
 std::shared_ptr<Graph> Graph::KouMarkowskyBerman(std::vector<uint32_t> terminals) {
-  
-const uint32_t numberOfSteinerPoints = terminals.size();
-const uint32_t numberOfCliqueEdges = numberOfEdgesInClique(numberOfSteinerPoints);
-  
-std::vector<std::shared_ptr<Edge>> ShortestPaths;
-std::vector<std::shared_ptr<Edge>>* tmpShortestPaths = new std::vector<std::shared_ptr<Edge>>[numberOfCliqueEdges];
 
-uint32_t currentShortestPathIdx = 0;
-for (uint32_t i = 0; i < numberOfSteinerPoints; ++i) {
-  for (uint32_t j = i + 1; j < numberOfSteinerPoints; ++j) {
-    tmpShortestPaths[currentShortestPathIdx] = ShortestPath(terminals.at(i), terminals.at(j));
-    ++currentShortestPathIdx;
+  const uint32_t numberOfSteinerPoints = terminals.size();
+  const uint32_t numberOfCliqueEdges = numberOfEdgesInClique(numberOfSteinerPoints);
+
+  std::vector<std::shared_ptr<Edge>> ShortestPaths;
+  std::vector<std::shared_ptr<Edge>>* tmpShortestPaths = new std::vector<std::shared_ptr<Edge>>[numberOfCliqueEdges];
+
+  uint32_t currentShortestPathIdx = 0;
+  for (uint32_t i = 0; i < numberOfSteinerPoints; ++i) {
+    for (uint32_t j = i + 1; j < numberOfSteinerPoints; ++j) {
+      tmpShortestPaths[currentShortestPathIdx] = ShortestPath(terminals.at(i), terminals.at(j));
+      ++currentShortestPathIdx;
+    }
   }
-}
 
-for (uint32_t i = 0; i < numberOfCliqueEdges; ++i) {
-  uint32_t shortestPathWeight = 0;
-  for (uint32_t j = 0; j < tmpShortestPaths[i].size(); ++j) {
-    shortestPathWeight += tmpShortestPaths[i].at(j)->weight;
+  for (uint32_t i = 0; i < numberOfCliqueEdges; ++i) {
+    uint32_t shortestPathWeight = 0;
+    for (uint32_t j = 0; j < tmpShortestPaths[i].size(); ++j) {
+      shortestPathWeight += tmpShortestPaths[i].at(j)->weight;
+    }
+    std::shared_ptr<Node> start = tmpShortestPaths[i].at(0)->start;
+    std::shared_ptr<Node> end = tmpShortestPaths[i].at(tmpShortestPaths[i].size() - 1)->end;
+    ShortestPaths.push_back(std::shared_ptr<Edge>(new Edge(start, shortestPathWeight, end)));
   }
-  std::shared_ptr<Node> start = tmpShortestPaths[i].at(0)->start;
-  std::shared_ptr<Node> end = tmpShortestPaths[i].at(tmpShortestPaths[i].size() - 1)->end;
-  ShortestPaths.push_back(std::shared_ptr<Edge>(new Edge(start,shortestPathWeight,end)));
-}
-  
-std::shared_ptr<Graph> g1(new Graph(terminals, ShortestPaths, numberOfSteinerPoints, numberOfCliqueEdges, printFlag));
 
-Graph t1 = g1->PrimMST();
+  std::shared_ptr<Graph> g1(new Graph(terminals, ShortestPaths, numberOfSteinerPoints, numberOfCliqueEdges, printFlag));
 
-std::vector<uint32_t> treeNodes;
-std::vector<std::shared_ptr<Edge>> treeEdges;
-uint32_t numberOfTreeNodes = 0;
-uint32_t numberOfTreeEdges = 0;
+  std::shared_ptr<Graph> t1 = g1->PrimMST();
 
-//przeiteruj cale adj.list t1 i zamien na tmpShortestPaths
-//Trzeba wyekstrachowac wierzcholki i krawędzie
-for(uint32_t i = 0; i < numberOfSteinerPoints; ++i) {
-  for (uint32_t j = 0; j < t1.adjacencyList[i].size(); ++j) {
-    std::shared_ptr<Node> start = t1.adjacencyList[i].at(j)->start;
-    std::shared_ptr<Node> end = t1.adjacencyList[i].at(j)->end;
-    int32_t idx = findInVector(start, end, ShortestPaths);
-    if (idx > -1) {
-      for (uint32_t k = 0; k < tmpShortestPaths[].size(); ++k) {
-        //we can do that bc ShortestPaths.at(i) corresponds to tmpShortestPaths[i]
-        treeEdges.push_back(); //
-        ++numberOfTreeEdges;
+  std::vector<uint32_t> treeNodes;
+  std::vector<std::shared_ptr<Edge>> treeEdges;
+  uint32_t numberOfTreeNodes = 0;
+  uint32_t numberOfTreeEdges = 0;
+  //przeiteruj cale adj.list t1 i zamien na tmpShortestPaths
+  //Trzeba wyekstrachowac wierzcholki i krawędzie
+  // BEZ POWTÓRZEN KRAW I WIERZCH
+  for(uint32_t i = 0; i < numberOfSteinerPoints; ++i) {
+    for (uint32_t j = 0; j < t1->adjacencyList[i].size(); ++j) {
+      std::shared_ptr<Node> start = t1->adjacencyList[i].at(j)->start;
+      std::shared_ptr<Node> end = t1->adjacencyList[i].at(j)->end;
+      int32_t idx = findInEdgeVector(start, end, ShortestPaths);
+      if (idx > -1) {
+        for (uint32_t k = 0; k < tmpShortestPaths[idx].size(); ++k) {
+          //TODO make part below more transparent possibly add addEdgeIfNotAlreadyIn
+          //we can do that bc ShortestPaths.at(i) corresponds to tmpShortestPaths[i]
+          std::shared_ptr<Edge> e = tmpShortestPaths[idx].at(k);
+          int32_t repetitionCheck = findInEdgeVector(e->start, e->end, treeEdges);
+          if (repetitionCheck == -1) {
+            treeEdges.push_back(e);
+            ++numberOfTreeEdges;
+
+            addNodeIfNotAlreadyIn(e->start->id, treeNodes, numberOfTreeNodes);
+            addNodeIfNotAlreadyIn(e->end->id, treeNodes, numberOfTreeNodes);
+          }
+        }
       }
     }
   }
-}
 
-std::shared_ptr<Graph> gs(new Graph(treeNodes, treeEdges, numberOfTreeNodes, numberOfTreeEdges, printFlag));
+  std::shared_ptr<Graph> gs(new Graph(treeNodes, treeEdges, numberOfTreeNodes, numberOfTreeEdges, printFlag));
 
+  std::shared_ptr<Graph> ts = gs->PrimMST();
 
+  uint32_t numberOfSteinerTreeNodes     = numberOfTreeNodes;
+  uint32_t tmpNumberOfSteinerTreeNodes  = numberOfTreeNodes;
+
+  uint32_t numberOfSteinerTreeEdges     = numberOfTreeEdges;
+  uint32_t tmpNumberOfSteinerTreeEdges  = numberOfTreeEdges;
+
+  std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfTreeNodes];
+  copyAdjacencyListFromGraph(ts, localCopyOfAdjacencyList);
+
+  bool foundDanglindBnrach = false;
+  bool continueSearch = true;
+  //TODO delete leaves
+  while (continueSearch) {
+    for (uint32_t i = 0; i < numberOfSteinerTreeNodes; ++i) {
+      //if non terminal leaf
+
+      //TODO check if it's safe (e.i. if start == localCopyOfAdjacencyList[i])
+      if (localCopyOfAdjacencyList[i].size() == 1 && findInUintVector(localCopyOfAdjacencyList[i].at(0)->start->id, terminals) == -1) {
+        foundDanglindBnrach = true;
+
+        treeNodes.erase(std::remove(treeNodes.begin(), treeNodes.end(), localCopyOfAdjacencyList[i].at(0)->start->id), treeNodes.end());
+        --tmpNumberOfSteinerTreeNodes;
+
+        std::shared_ptr<Edge> e = findInEdgeVectorAndReturnValue(localCopyOfAdjacencyList[i].at(0)->start, localCopyOfAdjacencyList[i].at(0)->end, treeEdges);
+        if (e != nullptr){
+          treeEdges.erase(std::remove(treeEdges.begin(), treeEdges.end(), e), treeEdges.end());
+          --tmpNumberOfSteinerTreeEdges;
+          removeEdgeFromAdjacencyList(e, localCopyOfAdjacencyList);
+        } else {
+          std::cerr << "Edge not found in delete leaes part" << std::endl;
+          return dummySharedPointerGraph();
+        }
+      }
+    }
+    if (!foundDanglindBnrach) {
+      continueSearch = false;
+      // break;
+    } else {
+      foundDanglindBnrach = false;
+      sortAdjacencyList(numberOfSteinerTreeNodes, localCopyOfAdjacencyList);
+      numberOfSteinerTreeNodes = tmpNumberOfSteinerTreeNodes;
+      numberOfSteinerTreeEdges = tmpNumberOfSteinerTreeEdges;
+    }
+  }
+  resetVisitedStatus();
+  std::shared_ptr<Graph> th(new Graph(treeNodes, treeEdges, numberOfSteinerTreeNodes, numberOfSteinerTreeEdges, printFlag));
+  return th;
 }
 
 /*
@@ -727,52 +885,59 @@ Initialize a tree with a single vertex, chosen arbitrarily from the graph.
 Grow the tree by one edge: Of the edges that connect the tree to vertices not yet in the tree, find the minimum-weight edge, and transfer it to the tree.
 Repeat step 2 (until all vertices are in the tree).
 */
-Graph Graph::PrimMST() {// do it with priority Queue, maybe my own immplementation?{
+std::shared_ptr<Graph> Graph::PrimMST() {// do it with priority Queue, maybe my own immplementation?{
   resetVisitedStatus();
   std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> toVisit;
   for (std::shared_ptr<Edge>& edge : adjacencyList[0]) //init
     toVisit.push(edge);
   vertices[0]->visited = true;
-  
-  std::shared_ptr<Edge> tmptreeEdges[numberOfNodes - 1];
+
+  std::vector<uint32_t> nodes;
+  std::vector<std::shared_ptr<Edge>> tmptreeEdges;
+
+  // std::shared_ptr<Edge> tmptreeEdges[numberOfNodes - 1];
   uint64_t totalWeight = 0;
-  for (uint32_t treeSize = 0; treeSize < numberOfNodes - 1; ++treeSize)
-  {
+  for (uint32_t treeSize = 0; treeSize < numberOfNodes - 1; ++treeSize) {
     while (toVisit.top()->end->visited) //remoeve all edges that lead to already visited nodes
       toVisit.pop();
 
-    if (toVisit.size() == 0) 
-    {
+    if (toVisit.size() == 0) {
       std::cout << "End in loop PimMST; dummy graph" << std::endl;
-      return dummyGraph();
+      return dummySharedPointerGraph();
     }
     std::shared_ptr<Edge> e = toVisit.top();
-    tmptreeEdges[treeSize] = e;
+    tmptreeEdges.push_back(e);
+
+    int32_t repetitionCheck = findInUintVector(e->start->id, nodes);
+    if (repetitionCheck == -1) {
+      nodes.push_back(e->start->id);
+    }
+
     toVisit.pop();
     e->end->visited = true;
     uint32_t nextNodeIndex = e->end->id;
-    for (std::shared_ptr<Edge>& edge : adjacencyList[nextNodeIndex])
-    {
-      if (!edge->end->visited)
-      {
+
+    repetitionCheck = findInUintVector(nextNodeIndex, nodes);
+    if (repetitionCheck == -1) {
+      nodes.push_back(nextNodeIndex);
+    }
+
+    for (std::shared_ptr<Edge>& edge : adjacencyList[nextNodeIndex]) {
+      if (!edge->end->visited) {
         toVisit.push(edge);
       }
     }
     totalWeight += e->weight;
   }
-  if (printFlag && numberOfNodes < 1000)
-  {
+  if (printFlag && numberOfNodes < 1000) {
     for (uint32_t i = 0; i < numberOfNodes - 1; ++i)
-      std::cout << tmptreeEdges[i]->start->id << "->" <<  tmptreeEdges[i]->end->id << "; ";
+      std::cout << tmptreeEdges.at(i)->start->id << "->" <<  tmptreeEdges.at(i)->end->id << "; ";
     std::cout << std::endl;
   }
   std::cout << "PimMST totalWeight = " << totalWeight << std::endl;
-
-  std::cout << "Dummy graph primMST" << std::endl;
-  return dummyGraph();
+  resetVisitedStatus();
+  return std::shared_ptr<Graph>(new Graph(nodes, tmptreeEdges, numberOfNodes, numberOfNodes - 1, printFlag));
 }
-
-
 
 void Graph::printData() {
   for (uint32_t i = 0; i < numberOfNodes; ++i) {
@@ -786,14 +951,6 @@ void Graph::printData() {
   }
 }
 
-bool Graph::isConnected() {
-  bfs();
-  for (uint32_t i = 0; i < numberOfNodes; ++i)
-    if (!vertices[i]->visited)
-      return false;
-  return true;
-}
-
 void Graph::resetVisitedStatus() {
   for (uint32_t i = 0; i < numberOfNodes; ++i)
     vertices[i]->visited = false;
@@ -802,6 +959,27 @@ void Graph::resetVisitedStatus() {
 void Graph::printVisitedStatus() {
   for (uint32_t i = 0; i < numberOfNodes; ++i)
     std::cout << "node " << i << " visited = " << vertices[i]->visited << std::endl;
+}
+
+bool Graph::isConnected() {
+    std::cout << "HELLO in" << std::endl;
+
+  resetVisitedStatus();
+    std::cout << "HELLO in" << std::endl;
+
+  bfs();
+      std::cout << "HELLO in" << std::endl;
+
+  bool returnValue = true;
+  for (uint32_t i = 0; i < numberOfNodes; ++i)
+    if (!vertices[i]->visited)
+      return false;
+  std::cout << "HELLO in" << std::endl;
+
+  resetVisitedStatus();
+      std::cout << "HELLO in" << std::endl;
+
+  return returnValue;
 }
 
 bool Graph::checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id) {
@@ -839,29 +1017,42 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     std::cout << "Graph is NOT connected" << std::endl;
     return;
   }
+  std::shared_ptr<Graph> mst = graph.PrimMST(); //dummy for now
   graph.resetVisitedStatus();
-  Graph mst = graph.PrimMST(); //dummy for now
-  graph.resetVisitedStatus();
-  mst.resetVisitedStatus();
 
-  if(mst.isConnected()) { // TODO move code below to isConnected
-    std::cout << "Graph is connected" << std::endl;
+  if(mst->isConnected()) { // TODO move code below to isConnected
+    std::cout << "mst is connected" << std::endl;
   } else {
-    std::cout << "Graph is NOT connected" << std::endl;
+    std::cout << "mst is NOT connected" << std::endl;
     return;
   }
 
   uint32_t numberOfTerminals = std::round(numberOfNodes / 4);
   std::vector<uint32_t> terminals = graph.generateTerminals(numberOfTerminals);
 
-  std::shared_ptr<Graph> steinerTree(graph.TakahashiMatsuyama(terminals));
-  graph.resetVisitedStatus();
-  steinerTree->resetVisitedStatus();
+  std::shared_ptr<Graph> steinerTreeTakahashiMatsuyama(graph.TakahashiMatsuyama(terminals));
+    std::cout << "HELLO" << std::endl;
 
-  if(steinerTree->isConnected()) { // TODO move code below to isConnected
-    std::cout << "Graph is connected" << std::endl;
+  graph.resetVisitedStatus();
+  std::cout << "HELLO" << std::endl;
+
+  if(steinerTreeTakahashiMatsuyama->isConnected()) { // TODO move code below to isConnected
+    std::cout << "steinerTreeTakahashiMatsuyama is connected" << std::endl;
   } else {
-    std::cout << "Graph is NOT connected" << std::endl;
+    std::cout << "steinerTreeTakahashiMatsuyama is NOT connected" << std::endl;
+    // return;
+  }
+
+  std::cout << "HELLO" << std::endl;
+
+  std::shared_ptr<Graph> steinerTreeKouMarkowskyBerman(graph.KouMarkowskyBerman(terminals));
+  graph.resetVisitedStatus();
+
+  if(steinerTreeKouMarkowskyBerman->isConnected()) { // TODO move code below to isConnected
+    std::cout << "steinerTreeKouMarkowskyBerman is connected" << std::endl;
+  } else {
+    std::cout << "steinerTreeKouMarkowskyBerman is NOT connected" << std::endl;
     return;
   }
+
 }

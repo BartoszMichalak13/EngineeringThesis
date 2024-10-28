@@ -33,7 +33,7 @@ class Graph {
     bool isConnected();
     std::shared_ptr<Graph> TakahashiMatsuyama(std::vector<uint32_t> terminals); 
     std::shared_ptr<Graph> KouMarkowskyBerman(std::vector<uint32_t> terminals);
-    Graph PrimMST(); //if it is suppose to return graph we either create childClass named tree or add another constructor for list of edges and nodes to populate the new graph
+    std::shared_ptr<Graph> PrimMST(); //if it is suppose to return graph we either create childClass named tree or add another constructor for list of edges and nodes to populate the new graph
     void printVisitedStatus();
     void resetVisitedStatus();
 };
