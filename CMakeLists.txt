@@ -18,4 +18,9 @@ add_executable(GraphGenerator
   src/graph.cpp
   src/random.cpp
   src/utils.cpp
+  src/debugPrints.cpp
+  src/helpers.cpp
+  src/algorithmRunner.cpp
+  src/Algorithms/TakahashiMatsuyama.cpp
+  src/Algorithms/KouMarkowskyBerman.cpp
 )

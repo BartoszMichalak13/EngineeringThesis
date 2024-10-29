@@ -1,8 +1,12 @@
 #include "random.hpp"
 
-Random::Random() : generator(rd()) {}
-
-Random::~Random() {}
+Random* Random::random = nullptr;
+Random *Random::getInstance() {
+  if (random==nullptr) {
+    random = new Random();
+  }
+  return random;
+}
 
 uint32_t Random::generateRandomNumber(uint32_t min, uint32_t max)
 {

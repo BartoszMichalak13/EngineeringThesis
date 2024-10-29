@@ -1,6 +1,7 @@
 #include <iostream>
-#include "graph.hpp"
-#include "random.hpp"
+// #include "graph.hpp"
+#include "algorithmRunner.hpp"
+// #include "random.hpp"
 #include "utils.hpp"
 #include <chrono>
 
