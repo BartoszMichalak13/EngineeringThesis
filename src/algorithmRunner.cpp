@@ -9,13 +9,6 @@
 void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density, bool  printFlag)
 {
   std::shared_ptr<Graph> graph(new Graph(numberOfNodes, numberOfEdges, printFlag));
-  std::cout << "graph->numberOfNodes " << graph->numberOfNodes << std::endl;
-
-  std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
-  copyAdjacencyListFromGraph(graph, localCopyOfAdjacencyList);
-  std::cout << "graph->numberOfNodes " << graph->numberOfNodes << std::endl;
-
-
   const uint32_t range = numberOfNodes - 1;
 
   for (uint32_t i = 0; i < numberOfEdges; ++i)
@@ -35,6 +28,17 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     graph->printData();
   }
 
+  std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
+  copyAdjacencyListFromGraph(graph, localCopyOfAdjacencyList);
+
+  if (compareAdajcencyLists(graph->adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
+    std::cout << "Comparing Adajcency Lists Failed" << std::endl;
+    graph->printAdajcencyListFromGraph();
+    std::cout << "Local" << std::endl;
+    printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
+    return;
+  }
+
   if(graph->isConnected()) {
     std::cout << "Graph is connected" << std::endl;
   } else {
@@ -43,10 +47,10 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     localCopyOfAdjacencyList = nullptr;
     return;
   }
-  std::cout << "graph->numberOfNodes " << graph->numberOfNodes << std::endl;
+
+
 
   std::shared_ptr<Graph> mst = graph->PrimMST(); //dummy for now
-  std::cout << "graph->numberOfNodes " << graph->numberOfNodes << std::endl;
 
   graph->resetVisitedStatus();
 
@@ -58,13 +62,10 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     localCopyOfAdjacencyList = nullptr;
     return;
   }
-  std::cout << "graph->numberOfNodes " << graph->numberOfNodes << std::endl;
 
   uint32_t numberOfTerminals = std::round(numberOfNodes / 4);
   std::vector<uint32_t> terminals = graph->generateTerminals(numberOfTerminals);
 
-  // graph->printAdajcencyListFromGraph();
-  std::cout << "graph->numberOfNodes " << graph->numberOfNodes << std::endl;
   printNodeVector(terminals);
   std::shared_ptr<Graph> steinerTreeTakahashiMatsuyama = graph->TakahashiMatsuyama(terminals);
     std::cout << "HELLO" << std::endl;
@@ -80,7 +81,7 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     }
   }
 
-  graph->printAdajcencyListFromGraph();
+  // graph->printAdajcencyListFromGraph();
 
   graph->resetVisitedStatus();
   std::cout << "HELLO" << std::endl;
@@ -96,6 +97,10 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
 
   if (compareAdajcencyLists(graph->adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
     std::cout << "Comparing Adajcency Lists Failed" << std::endl;
+    graph->printAdajcencyListFromGraph();
+    std::cout << "Local" << std::endl;
+    printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
+
     // return dummySharedPointerGraph();
   }
   std::shared_ptr<Graph> steinerTreeKouMarkowskyBerman(graph->KouMarkowskyBerman(terminals));

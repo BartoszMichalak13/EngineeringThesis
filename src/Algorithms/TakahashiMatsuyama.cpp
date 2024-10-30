@@ -18,8 +18,9 @@ modify edges, give pointer to pred
 */
 std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals) {// do it with priority Queue, maybe my own immplementation?
 
-  std::shared_ptr<Graph> self(this);
-
+  // std::shared_ptr<Graph> self(this);
+  std::shared_ptr<Graph> self = shared_from_this();
+  // std::enable_shared_from_this<Graph> self(*this);
   std::vector<uint32_t> originalTerminals;
   for (uint32_t i = 0; i < terminals.size(); ++i)
     originalTerminals.push_back(terminals.at(i));
@@ -46,7 +47,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
   do {
     //TODO is this check necessary?
     if (compareAdajcencyLists(adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
-      std::cout << "Comparing Adajcency Lists Failed" << std::endl;
+      std::cerr << "Error: Comparing Adajcency Lists Failed" << std::endl;
       return dummySharedPointerGraph();
     }
 
@@ -67,7 +68,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
           return dummySharedPointerGraph();
         }
         searchNeighbours(toVisit, localCopyOfAdjacencyList, uniqueNodes.at(i), e);
-        e = nullptr;
+        // e = nullptr;
       }
       foundTerminal = false;
     }
@@ -103,12 +104,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
           oldPred = e->pred;
           embedEdgeIntoTree(e, localCopyOfAdjacencyList, adjacencyList, tmpTreeEdges);
         } // untill we reach beginning of the path
-
-        // resetVisitedStatus();
-
         resetCopyOfAdjacencyList(localCopyOfAdjacencyList, self); //it should reset visitied status
-        std::cout << "printVisitedStatus();" << std::endl;
-        printVisitedStatus();
       } else { // aka terminal not found
         searchNeighbours(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
       }
@@ -162,20 +158,22 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
       treeEdges.push_back(e);
     }
   }
-  std::cout << "tmpTreeEdges.size() " << tmpTreeEdges.size() << std::endl;
+  std::cout << "nodes.size() " << nodes.size() << "; tmpTreeEdges.size() " << tmpTreeEdges.size() << std::endl;
   std::shared_ptr<Graph> steinerTree(new Graph(nodes, treeEdges, nodes.size(), treeEdges.size(), printFlag));
 
   for (uint32_t i = 0; i < numberOfNodes; ++i) {
     for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
-      // localCopyOfAdjacencyList[i].at(j)->start = nullptr;
-      // localCopyOfAdjacencyList[i].at(j)->end = nullptr;
+      localCopyOfAdjacencyList[i].at(j)->start = nullptr;
+      localCopyOfAdjacencyList[i].at(j)->end = nullptr;
       localCopyOfAdjacencyList[i].at(j)->pred = nullptr;
       localCopyOfAdjacencyList[i].at(j)->succ = nullptr;
     }
     localCopyOfAdjacencyList[i].clear();
   }
+  // std::cout << "numberOfNodes " << numberOfNodes << "; steinerTree->numberOfNodes " << steinerTree->numberOfNodes << std::endl;
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;
   resetVisitedStatus();
+  std::cout << "numberOfNodes " << numberOfNodes << "; steinerTree->numberOfNodes " << steinerTree->numberOfNodes << std::endl;
   return steinerTree;
 }

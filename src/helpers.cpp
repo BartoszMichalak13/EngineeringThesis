@@ -205,7 +205,8 @@ std::shared_ptr<Edge> findZeroEdgeInAdjacentTo(uint32_t idx, std::vector<std::sh
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[idx].size(); ++i)
     if (localCopyOfAdjacencyList[idx].at(i)->weight == 0)
       return localCopyOfAdjacencyList[idx].at(i);
-  std::cerr << "Error: findZeroEdgeInAdjacentTo returns nullptr " << std::endl;
+
+  std::cerr << "Error: findZeroEdgeInAdjacentTo returns nullptr; searched index: " << idx << std::endl;
   return nullptr;
 }
 

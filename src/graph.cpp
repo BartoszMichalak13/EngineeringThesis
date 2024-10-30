@@ -173,17 +173,19 @@ void Graph::searchNeighbours(
         updatePred(edge, currentEdge, localCopyOfAdjacencyList); //TODO check if works ok
       else // if it's 0 it's part of a tree
         updatePredToLoop(edge, localCopyOfAdjacencyList); //TODO: I think it should be already done
-      updateWeight(edge, (edge->weight + currentEdge->weight), localCopyOfAdjacencyList);
+
+      if (edge->weight) // if positive update, else does not change, it's tree  part KEY PART
+        updateWeight(edge, (edge->weight + currentEdge->weight), localCopyOfAdjacencyList);
       if (edge == nullptr) {
         std::cerr << "Error: Null edge detected in searchNeighbours" << std::endl;
       } else {
         toVisit.push(edge);
       }
     } else {
-      std::cerr << "Error: SearchNeighbours currentEdge is the same as edge" << std::endl;
-      printEdge(edge);
-      std::cerr << "currentEdge" << std::endl;
-      printEdge(currentEdge);
+      // std::cerr << "Error: SearchNeighbours currentEdge is the same as edge" << std::endl;
+      // printEdge(edge);
+      // std::cerr << "currentEdge" << std::endl;
+      // printEdge(currentEdge);
     }
   }
 }
@@ -327,23 +329,19 @@ void Graph::printVisitedStatus() {
 }
 
 bool Graph::isConnected() {
-    std::cout << "HELLO in" << std::endl;
-
+  std::cout << "HELLO in" << std::endl;
   resetVisitedStatus();
-    std::cout << "HELLO in" << std::endl;
-
+  std::cout << "HELLO in" << std::endl;
   bfs();
-      std::cout << "HELLO in" << std::endl;
+  std::cout << "HELLO in" << std::endl;
 
   bool returnValue = true;
   for (uint32_t i = 0; i < numberOfNodes; ++i)
     if (!vertices[i]->visited)
       return false;
   std::cout << "HELLO in" << std::endl;
-
   resetVisitedStatus();
-      std::cout << "HELLO in" << std::endl;
-
+  std::cout << "HELLO in" << std::endl;
   return returnValue;
 }
 

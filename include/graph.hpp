@@ -46,7 +46,7 @@ struct PseudoEdge
 };
 
 
-class Graph {
+class Graph : public std::enable_shared_from_this<Graph> { // TODO doczytaj o  std::enable_shared_from_this
   private:
 
   public:

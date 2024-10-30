@@ -9,7 +9,7 @@
 Prints PseudoEdge
 */
 void tmpPseudoEdgePrint(PseudoEdge p) {
-  std::cout << p.start << " - " << p.end << std::endl;
+  std::cout << p.start << " - " << p.end << "(" << p.weight << ")" << std::endl;
 }
 
 /*
