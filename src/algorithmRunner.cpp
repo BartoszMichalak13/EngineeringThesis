@@ -90,7 +90,7 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     std::cout << "steinerTreeTakahashiMatsuyama is connected" << std::endl;
   } else {
     std::cout << "steinerTreeTakahashiMatsuyama is NOT connected" << std::endl;
-    // return;
+    return;
   }
 
   std::cout << "HELLO" << std::endl;
@@ -111,7 +111,7 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   } else {
     std::cout << "steinerTreeKouMarkowskyBerman is NOT connected" << std::endl;
     delete[] localCopyOfAdjacencyList;
-  localCopyOfAdjacencyList = nullptr;
+    localCopyOfAdjacencyList = nullptr;
     return;
   }
   delete[] localCopyOfAdjacencyList;

@@ -103,9 +103,15 @@ int32_t findInTmpTree(uint32_t edgeStart, uint32_t edgeEnd, std::vector<PseudoEd
 finds an edge in adjacencyList and returns pointer to it
 */
 std::shared_ptr<Edge> findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<std::shared_ptr<Edge>>* adjacencyList) {
-  for(uint32_t i = 0; i < adjacencyList[edgeStart].size(); ++i)
-    if (adjacencyList[edgeStart].at(i)->end->id == edgeEnd) //TODO should be ok, bc we have 2 copies of this edge
-      return adjacencyList[edgeStart].at(i);
+
+  for(uint32_t i = 0; i < adjacencyList[edgeStart].size(); ++i) {
+    if (adjacencyList[edgeStart].at(i) == nullptr) {
+      std::cerr << "Error: adjacencyList[" << edgeStart << "].at(" << i << ") returns nullpointer" << std::endl;
+      // return nullptr;
+    }
+      if (adjacencyList[edgeStart].at(i)->end->id == edgeEnd) //TODO should be ok, bc we have 2 copies of this edge
+        return adjacencyList[edgeStart].at(i);
+  }
   std::cerr << "Error: findEdge returns nullpointer for "<< edgeStart << " - " << edgeEnd << std::endl;
   return nullptr;
 }

@@ -148,7 +148,7 @@ void Graph::bfs() {
 // }
 
 
-
+//TODO ideas: moze glowne adjacency list ma nie wyczyszczone pred?
 /*
 Searches neighbourhood of node at nodeIndex, adds it to toVisitupdatePred
 */
@@ -195,16 +195,18 @@ void Graph::searchNeighbours(
 This is Dijkstra algorithm, that stops when we have found node2
 */
 std::shared_ptr<std::vector<std::shared_ptr<Edge>>> Graph::ShortestPath(uint32_t node1, uint32_t node2) {
-  std::shared_ptr<Graph> self(this);
+  std::shared_ptr<Graph> self = shared_from_this();
 
-  std::shared_ptr<std::vector<std::shared_ptr<Edge>>> shortestPath;
+  // std::shared_ptr<std::vector<std::shared_ptr<Edge>>> shortestPath(std::vector<std::shared_ptr<Edge>>());
+  std::shared_ptr<std::vector<std::shared_ptr<Edge>>> shortestPath = std::make_shared<std::vector<std::shared_ptr<Edge>>>();
+
   std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
   copyAdjacencyListFromGraph(self, localCopyOfAdjacencyList);
-  
+
   std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> toVisit;
   int32_t idx = findInArray(node1, vertices, numberOfNodes);
   if (idx == -1) {
-    std::cout << "Error Node " << node1 << " not found in ShortestPath"  << std::endl;
+    std::cerr << "Error: Node " << node1 << " not found in ShortestPath"  << std::endl;
     return std::shared_ptr<std::vector<std::shared_ptr<Edge>>>();
   }
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[idx].size(); ++i)
@@ -218,17 +220,19 @@ std::shared_ptr<std::vector<std::shared_ptr<Edge>>> Graph::ShortestPath(uint32_t
     uint32_t nextNodeIndex = e->end->id;
     if (nextNodeIndex == node2) {
       //TODO can we put that code in while part? (same in Takahashi)
-
       std::shared_ptr<Edge> oldPred = e->pred;
       std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
-      shortestPath->push_back(edg);
+      (*shortestPath).push_back(edg);
 
       // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
-      while (oldPred != nullptr && oldPred->start->id != e->start->id) {
+      // while (oldPred != nullptr && oldPred->start->id != e->start->id) {
+      while (oldPred != nullptr && e->start->id != node1) {
         e = oldPred;
         oldPred = e->pred;
         std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
-        shortestPath->push_back(edg);
+        printEdge(e);
+        printEdgePred(e);
+        (*shortestPath).push_back(edg);
       } // untill we reach beginning of the path
       delete[] localCopyOfAdjacencyList;
       localCopyOfAdjacencyList = nullptr;
@@ -236,8 +240,20 @@ std::shared_ptr<std::vector<std::shared_ptr<Edge>>> Graph::ShortestPath(uint32_t
     } else {
       searchNeighbours(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
     }
+    // std::cout << "HELLO del bef" << std::endl;
+    // while ((toVisit.top() == nullptr || toVisit.top()->end->visited) && !toVisit.empty()) {//TODO is it always the end?
+    //   if (toVisit.top() == nullptr) {
+    //    std::cout << "HELLO del in nullptr" << std::endl;
+
+    //   } else {
+    //      std::cout << "HELLO del in ";
+    //     printEdge(toVisit.top());
+    //   }
+    //   toVisit.pop();
+    // }
+    // std::cout << "HELLO del aft" << std::endl;
   }
-  std::cerr << "Could not find path between node1 and node2" << std::endl;
+  std::cerr << "Error: Could not find path between node1 and node2" << std::endl;
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;
   return std::shared_ptr<std::vector<std::shared_ptr<Edge>>>(); //empty vec

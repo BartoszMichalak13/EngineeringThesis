@@ -24,6 +24,8 @@ std::shared_ptr<Graph> Graph::KouMarkowskyBerman(std::vector<uint32_t> terminals
   const uint32_t numberOfSteinerPoints = terminals.size();
   const uint32_t numberOfCliqueEdges = numberOfEdgesInClique(numberOfSteinerPoints);
 
+  printNodeVector(terminals);
+
   std::vector<std::shared_ptr<Edge>> ShortestPaths;
   std::shared_ptr<std::vector<std::shared_ptr<Edge>>>* tmpShortestPaths = new std::shared_ptr<std::vector<std::shared_ptr<Edge>>>[numberOfCliqueEdges];
 
