@@ -7,18 +7,13 @@
 #include <functional>
 #include <stdint.h>
 
-//TODO check resulting trees with bfs
 //TODO QoL graph constructor?
 //TODO check ranges (e.g. function returning int32 instead of uint32)
 //TODO split into files, maybe for debug functions, helpers etc
-//TODO remove treeSize?
 //TODO inline everything
 //TODO powrzucaj consty
 //TODO wszystkie uzycie adj powinny byc bezpieczne (tj bfs na steiner tree nie ma w adj[5] wierzcolka 5 itd)
 //TODO nazwy, ładne, czytelne, przenoszą sens
-//TOOD TakahashiMatsuyama returns 2 trees (tree is not connected)
-//TOOD TakahashiMatsuyama didnt find all nodes
-//TOOD TakahashiMatsuyama psuje liczbe wierzcholkow w orginalnym grafie
 //TODO potencjalnie mozna sprawdzac czy acykliczny
 
 //coś z resetem pewnie, użyj emplace moze na priorty que (deprecated?)
@@ -76,12 +71,12 @@ std::shared_ptr<Graph> Graph::dummySharedPointerGraph() {
   return std::shared_ptr<Graph>(new Graph(0,0,0));
 }
 
+/*
+Used only for the first graph, else we may want to change vertices[nodeId] to idx = find(NodeId); vertices[idx]
+*/
 void Graph::addEdge(uint32_t node1Id, uint32_t node2Id) {
   // We choose them, so that they're smaller than numberOfNodes
-
   const uint32_t weight = Random::getInstance()->generateRandomNumber(1, maxEdgeWeight);
-  if(weight == 0)
-    std::cout << "ERRRRRRRRRRROR\n";
   this->adjacencyList[node1Id].push_back(std::shared_ptr<Edge>(new Edge(vertices[node1Id], weight, vertices[node2Id])));
   this->adjacencyList[node2Id].push_back(std::shared_ptr<Edge>(new Edge(vertices[node2Id], weight, vertices[node1Id])));
 }
@@ -135,24 +130,26 @@ void Graph::bfs() {
   }
 } 
 
-// /*
-// copies adjlist of a graph to given copyOfAdjacencyList
-// */
-// void Graph::copyAdjacencyList(std::vector<std::shared_ptr<Edge>>*& copyOfAdjacencyList) {
-//   for (uint32_t i = 0; i < numberOfNodes; ++i)
-//     for (const std::shared_ptr<Edge>& edge : adjacencyList[i]) {
-//       std::shared_ptr<Node> start(vertices[edge->start->id]);
-//       std::shared_ptr<Node> end(vertices[edge->end->id]);
-//       copyOfAdjacencyList[i].push_back(std::shared_ptr<Edge>(new Edge(start, edge->weight, end, edge->pred, edge->succ)));
-//     }
-// }
+/*
+Calculates total cost of all graph edges
+*/
+uint32_t Graph::graphTotalCost() {
+  uint32_t cost = 0;
+  for (uint32_t i = 0; i < numberOfNodes; ++i) {
+    for (const auto& edge : adjacencyList[i]) {
+      cost += edge->weight;
+      if(edge->weight == 0)
+        std::cerr << "ERROR;" << std::endl;
+    }
+  }
+  return cost/2; //we counted both edges 0-1 and 1-0 
+}
 
-
-//TODO ideas: moze glowne adjacency list ma nie wyczyszczone pred?
+//TODO clear this mess
 /*
 Searches neighbourhood of node at nodeIndex, adds it to toVisitupdatePred
 */
-void Graph::searchNeighbours(
+void Graph::searchNeighboursV2(
       std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> &toVisit,
       std::vector<std::shared_ptr<Edge>>* &localCopyOfAdjacencyList,
       uint32_t nodeIndex,
@@ -160,7 +157,7 @@ void Graph::searchNeighbours(
 
   int32_t idx = findInArray(nodeIndex, vertices, numberOfNodes);
   if (idx == -1) {
-    std::cerr << "Error: Node " << nodeIndex << " not found in searchNeighbours"  << std::endl;
+    std::cerr << "Error: Node " << nodeIndex << " not found in searchNeighboursV2"  << std::endl;
     return;
   }
 
@@ -169,39 +166,45 @@ void Graph::searchNeighbours(
     // if they are different edges
     if (!((edge->start->id == currentEdge->start->id  && edge->end->id == currentEdge->end->id) ||
         (edge->start->id == currentEdge->end->id    && edge->end->id == currentEdge->start->id))) {
-      if (edge->weight) // normal procedure
-        updatePred(edge, currentEdge, localCopyOfAdjacencyList); //TODO check if works ok
-      else // if it's 0 it's part of a tree
+      if (edge->weight) {// normal procedure
+        if (edge->pred == nullptr) { // if pred != nullptr it means the edge was seen before, and may be a part of another path
+          updatePred(edge, currentEdge, localCopyOfAdjacencyList);
+        }
+      } else {// if it's 0 it's part of a tree
         updatePredToLoop(edge, localCopyOfAdjacencyList); //TODO: I think it should be already done
+      }
 
-      if (edge->weight) // if positive update, else does not change, it's tree  part KEY PART
-        updateWeight(edge, (edge->weight + currentEdge->weight), localCopyOfAdjacencyList);
+      if (edge->weight) {// if positive update, else does not change, it's tree  part KEY PART
+        std::shared_ptr<Edge> e = findEdge(edge->start->id, edge->end->id, adjacencyList);
+        if (e == nullptr) {
+          std::cerr << "Error: edge e is nullptr in adjacencyList in searchNeighboursV2" << std::endl;
+          return;
+        }
+        //it is crucial to take original edge weight + current, as if the edge'd have been seen before the weight'd been much greater
+        updateWeight(edge, (e->weight + currentEdge->weight), localCopyOfAdjacencyList);
+      }
       if (edge == nullptr) {
-        std::cerr << "Error: Null edge detected in searchNeighbours" << std::endl;
+        std::cerr << "Error: Null edge detected in searchNeighboursv2" << std::endl;
       } else {
         toVisit.push(edge);
       }
-    } else {
-      // std::cerr << "Error: SearchNeighbours currentEdge is the same as edge" << std::endl;
-      // printEdge(edge);
-      // std::cerr << "currentEdge" << std::endl;
-      // printEdge(currentEdge);
     }
   }
 }
-//TODO in kou in shortespath part add edges from adjList, not local adj list
+
+//TODO centralny punkt majacy polaczenie do all innych w grafie, sprawdz jak to sie zachowuje
  
 /*
 This is Dijkstra algorithm, that stops when we have found node2
+
+Note
 */
 std::shared_ptr<std::vector<std::shared_ptr<Edge>>> Graph::ShortestPath(uint32_t node1, uint32_t node2) {
   std::shared_ptr<Graph> self = shared_from_this();
-
-  // std::shared_ptr<std::vector<std::shared_ptr<Edge>>> shortestPath(std::vector<std::shared_ptr<Edge>>());
   std::shared_ptr<std::vector<std::shared_ptr<Edge>>> shortestPath = std::make_shared<std::vector<std::shared_ptr<Edge>>>();
 
   std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
-  copyAdjacencyListFromGraph(self, localCopyOfAdjacencyList);
+  copyAdjacencyListFromGraphWithNewNodeInstances(self, localCopyOfAdjacencyList);
 
   std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> toVisit;
   int32_t idx = findInArray(node1, vertices, numberOfNodes);
@@ -225,43 +228,25 @@ std::shared_ptr<std::vector<std::shared_ptr<Edge>>> Graph::ShortestPath(uint32_t
       (*shortestPath).push_back(edg);
 
       // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
-      // while (oldPred != nullptr && oldPred->start->id != e->start->id) {
       while (oldPred != nullptr && e->start->id != node1) {
         e = oldPred;
         oldPred = e->pred;
         std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
-        printEdge(e);
-        printEdgePred(e);
         (*shortestPath).push_back(edg);
       } // untill we reach beginning of the path
       delete[] localCopyOfAdjacencyList;
       localCopyOfAdjacencyList = nullptr;
+      resetVisitedStatus();
       return shortestPath;
     } else {
-      searchNeighbours(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
+      searchNeighboursV2(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
     }
-    // std::cout << "HELLO del bef" << std::endl;
-    // while ((toVisit.top() == nullptr || toVisit.top()->end->visited) && !toVisit.empty()) {//TODO is it always the end?
-    //   if (toVisit.top() == nullptr) {
-    //    std::cout << "HELLO del in nullptr" << std::endl;
-
-    //   } else {
-    //      std::cout << "HELLO del in ";
-    //     printEdge(toVisit.top());
-    //   }
-    //   toVisit.pop();
-    // }
-    // std::cout << "HELLO del aft" << std::endl;
   }
   std::cerr << "Error: Could not find path between node1 and node2" << std::endl;
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;
   return std::shared_ptr<std::vector<std::shared_ptr<Edge>>>(); //empty vec
 }
-
-
-
-
 
 /*
 Initialize a tree with a single vertex, chosen arbitrarily from the graph.
@@ -278,7 +263,6 @@ std::shared_ptr<Graph> Graph::PrimMST() {// do it with priority Queue, maybe my 
   std::vector<uint32_t> nodes;
   std::vector<std::shared_ptr<Edge>> tmptreeEdges;
 
-  // std::shared_ptr<Edge> tmptreeEdges[numberOfNodes - 1];
   uint64_t totalWeight = 0;
   for (uint32_t treeSize = 0; treeSize < numberOfNodes - 1; ++treeSize) {
     while (toVisit.top()->end->visited) //remoeve all edges that lead to already visited nodes
@@ -305,7 +289,12 @@ std::shared_ptr<Graph> Graph::PrimMST() {// do it with priority Queue, maybe my 
       nodes.push_back(nextNodeIndex);
     }
 
-    for (std::shared_ptr<Edge>& edge : adjacencyList[nextNodeIndex]) {
+    int32_t idx = findInArray(nextNodeIndex, vertices, numberOfNodes);
+    if (idx == -1) {
+      std::cerr << "Error: no such a node in verticies: " << nextNodeIndex << std::endl;
+      return dummySharedPointerGraph();
+    }
+    for (std::shared_ptr<Edge>& edge : adjacencyList[idx]) {
       if (!edge->end->visited) {
         toVisit.push(edge);
       }
@@ -324,7 +313,7 @@ std::shared_ptr<Graph> Graph::PrimMST() {// do it with priority Queue, maybe my 
 
 void Graph::printData() {
   for (uint32_t i = 0; i < numberOfNodes; ++i) {
-    std::cout << "node " << i << " is connected to:\n\t"; 
+    std::cout << "node " << vertices[i]->id << " is connected to:\n\t"; 
     for (const auto& edge : adjacencyList[i]) {
       std::cout << static_cast<uint32_t>(edge->end->id) << " cost(" << edge->weight << ") ";
       if(edge->weight == 0)
@@ -345,19 +334,13 @@ void Graph::printVisitedStatus() {
 }
 
 bool Graph::isConnected() {
-  std::cout << "HELLO in" << std::endl;
   resetVisitedStatus();
-  std::cout << "HELLO in" << std::endl;
   bfs();
-  std::cout << "HELLO in" << std::endl;
-
   bool returnValue = true;
   for (uint32_t i = 0; i < numberOfNodes; ++i)
     if (!vertices[i]->visited)
       return false;
-  std::cout << "HELLO in" << std::endl;
   resetVisitedStatus();
-  std::cout << "HELLO in" << std::endl;
   return returnValue;
 }
 

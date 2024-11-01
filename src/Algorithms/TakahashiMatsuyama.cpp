@@ -17,10 +17,8 @@ modify edges, give pointer to pred
 @param terminals should be of positive size
 */
 std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals) {// do it with priority Queue, maybe my own immplementation?
-
-  // std::shared_ptr<Graph> self(this);
   std::shared_ptr<Graph> self = shared_from_this();
-  // std::enable_shared_from_this<Graph> self(*this);
+
   std::vector<uint32_t> originalTerminals;
   for (uint32_t i = 0; i < terminals.size(); ++i)
     originalTerminals.push_back(terminals.at(i));
@@ -28,9 +26,8 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
   //init
   resetVisitedStatus();
   std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
-  copyAdjacencyListFromGraph(self, localCopyOfAdjacencyList);
+  copyAdjacencyListFromGraphWithNewNodeInstances(self, localCopyOfAdjacencyList);
 
-  // printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
 
   //TODO change it to normal Edges
   std::vector<PseudoEdge> tmpTreeEdges;
@@ -67,7 +64,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
           std::cerr << "Error: e doesnt exit aka no neighbour with 0 weight for node "<< uniqueNodes.at(i) << std::endl;
           return dummySharedPointerGraph();
         }
-        searchNeighbours(toVisit, localCopyOfAdjacencyList, uniqueNodes.at(i), e);
+        searchNeighboursV2(toVisit, localCopyOfAdjacencyList, uniqueNodes.at(i), e);
         // e = nullptr;
       }
       foundTerminal = false;
@@ -106,7 +103,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
         } // untill we reach beginning of the path
         resetCopyOfAdjacencyList(localCopyOfAdjacencyList, self); //it should reset visitied status
       } else { // aka terminal not found
-        searchNeighbours(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
+        searchNeighboursV2(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
       }
     }
   } while(!terminals.empty()); // O(k)
@@ -153,12 +150,11 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
     std::shared_ptr<Edge> e = findEdge(tmpTreeEdges.at(i).start, tmpTreeEdges.at(i).end, adjacencyList);
     if (e == nullptr) {
       std::cerr << "Error: missing tmpTreeEdges: " << tmpTreeEdges.at(i).start << " - " << tmpTreeEdges.at(i).end << std::endl;
-      // return dummySharedPointerGraph();
+      return dummySharedPointerGraph();
     } else{
       treeEdges.push_back(e);
     }
   }
-  std::cout << "nodes.size() " << nodes.size() << "; tmpTreeEdges.size() " << tmpTreeEdges.size() << std::endl;
   std::shared_ptr<Graph> steinerTree(new Graph(nodes, treeEdges, nodes.size(), treeEdges.size(), printFlag));
 
   for (uint32_t i = 0; i < numberOfNodes; ++i) {
@@ -174,6 +170,5 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;
   resetVisitedStatus();
-  std::cout << "numberOfNodes " << numberOfNodes << "; steinerTree->numberOfNodes " << steinerTree->numberOfNodes << std::endl;
   return steinerTree;
 }

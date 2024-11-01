@@ -29,7 +29,7 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   }
 
   std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
-  copyAdjacencyListFromGraph(graph, localCopyOfAdjacencyList);
+  copyAdjacencyListFromGraphWithNewNodeInstances(graph, localCopyOfAdjacencyList);
 
   if (compareAdajcencyLists(graph->adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
     std::cout << "Comparing Adajcency Lists Failed" << std::endl;
@@ -68,23 +68,8 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
 
   printNodeVector(terminals);
   std::shared_ptr<Graph> steinerTreeTakahashiMatsuyama = graph->TakahashiMatsuyama(terminals);
-    std::cout << "HELLO" << std::endl;
-  if (graph == nullptr) {
-    std::cout << "nullptr" << std::endl;
-  } else {
-    std::cout << "ok" << std::endl;
-    if (graph->numberOfNodes == 0) {
-      std::cout << "NULL" << std::endl;
-    } else {
-      std::cout << "graph->numberOfNodes " << graph->numberOfNodes << std::endl;
-      std::cout << "steinerTreeTakahashiMatsuyama->numberOfNodes " << steinerTreeTakahashiMatsuyama->numberOfNodes << std::endl;
-    }
-  }
-
-  // graph->printAdajcencyListFromGraph();
 
   graph->resetVisitedStatus();
-  std::cout << "HELLO" << std::endl;
 
   if(steinerTreeTakahashiMatsuyama->isConnected()) { // TODO move code below to isConnected
     std::cout << "steinerTreeTakahashiMatsuyama is connected" << std::endl;
@@ -93,16 +78,16 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     return;
   }
 
-  std::cout << "HELLO" << std::endl;
-
   if (compareAdajcencyLists(graph->adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
     std::cout << "Comparing Adajcency Lists Failed" << std::endl;
     graph->printAdajcencyListFromGraph();
     std::cout << "Local" << std::endl;
     printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
-
-    // return dummySharedPointerGraph();
+    delete[] localCopyOfAdjacencyList;
+    localCopyOfAdjacencyList = nullptr;
+    return;
   }
+
   std::shared_ptr<Graph> steinerTreeKouMarkowskyBerman(graph->KouMarkowskyBerman(terminals));
   graph->resetVisitedStatus();
 
@@ -114,6 +99,14 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     localCopyOfAdjacencyList = nullptr;
     return;
   }
+
+  std::cout << "COSTS:" << std::endl;
+  std::cout << "starting graph: " << graph->graphTotalCost() << std::endl;
+  std::cout << "MST: " << mst->graphTotalCost() << std::endl;
+  std::cout << "TakahashiMatsuyama steinerTree: " << steinerTreeTakahashiMatsuyama->graphTotalCost() << std::endl;
+  std::cout << "KouMarkowskyBerman steinerTree: " << steinerTreeKouMarkowskyBerman->graphTotalCost() << std::endl;
+
+
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;
 

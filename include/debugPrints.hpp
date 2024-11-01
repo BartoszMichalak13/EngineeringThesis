@@ -9,6 +9,6 @@ void printEdgePred(std::shared_ptr<Edge> e);
 void printEdge(std::shared_ptr<Edge> e);
 void printEdgeVector(std::vector<std::shared_ptr<Edge>> vec);
 void printNodeVector(std::vector<uint32_t> vec);
-
+void printAdajcencyListPred(std::vector<std::shared_ptr<Edge>>* adjList, uint32_t numberOfNodes);
 
 #endif

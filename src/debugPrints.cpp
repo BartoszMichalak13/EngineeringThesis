@@ -81,3 +81,15 @@ void printNodeVector(std::vector<uint32_t> vec) {
     std::cout << vec.at(i) << ", ";
   std::cout << std::endl;
 }
+
+void printAdajcencyListPred(std::vector<std::shared_ptr<Edge>>* adjList, uint32_t numberOfNodes) {
+  for (uint32_t i = 0; i < numberOfNodes; ++i) {
+    std::cout << "node "<< i << std::endl;
+    std::cout << "\t";
+    for (const std::shared_ptr<Edge>& e: adjList[i]) {
+      printEdgePred(e);
+      std::cout << "edge " << std::endl;
+    }
+    std::cout << std::endl;
+  }
+}

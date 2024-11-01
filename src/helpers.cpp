@@ -22,7 +22,7 @@ bool compareAdajcencyLists(std::vector<std::shared_ptr<Edge>>* adjList1, std::ve
       return true;
     } else {
       for (uint32_t j = 0; j < adjList1[i].size(); ++j) {
-        if (adjList1[i].at(j)->end != adjList2[i].at(j)->end && adjList1[i].at(j)->end != adjList2[i].at(j)->end)
+        if (adjList1[i].at(j)->end->id != adjList2[i].at(j)->end->id && adjList1[i].at(j)->end->id != adjList2[i].at(j)->end->id)
         {
           std::cerr << "Error: Difference in row " << i << " at element "<< j << " of value: "
             << adjList1[i].at(j)->start->id << ","<< adjList1[i].at(j)->end->id << " vs "
@@ -35,15 +35,22 @@ bool compareAdajcencyLists(std::vector<std::shared_ptr<Edge>>* adjList1, std::ve
   return false;
 }
 
-/*
-copies adjlist of a graph to given copyOfAdjacencyList
-*/
-void copyAdjacencyListFromGraph(std::shared_ptr<Graph> graph, std::vector<std::shared_ptr<Edge>>*& copyOfAdjacencyList) {
+void copyAdjacencyListFromGraphWithNewNodeInstances(std::shared_ptr<Graph> graph, std::vector<std::shared_ptr<Edge>>*& copyOfAdjacencyList) {
   for (uint32_t i = 0; i < graph->numberOfNodes; ++i)
     for (const std::shared_ptr<Edge>& edge : graph->adjacencyList[i]) {
-      std::shared_ptr<Node> start(graph->vertices[edge->start->id]);
-      std::shared_ptr<Node> end(graph->vertices[edge->end->id]);
-      copyOfAdjacencyList[i].push_back(std::shared_ptr<Edge>(new Edge(start, edge->weight, end, edge->pred, edge->succ)));
+      int32_t idx = findInArray(edge->start->id, graph->vertices, graph->numberOfNodes);
+      if (idx != -1) {
+        std::shared_ptr<Node> start(new Node(graph->vertices[idx]->id));
+        idx = findInArray(edge->end->id, graph->vertices, graph->numberOfNodes);
+        if (idx != -1) {
+          std::shared_ptr<Node> end(new Node(graph->vertices[idx]->id));
+          copyOfAdjacencyList[i].push_back(std::shared_ptr<Edge>(new Edge(start, edge->weight, end)));
+        } else {
+          std::cerr << "Error: Couldn't find edge during copyAdjacencyListFromGraphWithNewNodeInstances: " << std::endl; printEdge(edge);
+        }
+      } else {
+        std::cerr << "Error: Couldn't find edge during copyAdjacencyListFromGraphWithNewNodeInstances: " << std::endl; printEdge(edge);
+      }
     }
 }
 
@@ -57,13 +64,12 @@ int32_t findInUintVector(uint32_t value, std::vector<uint32_t> vec) {
   return -1;
 }
 
-//
 /*
 returns index from vector which holds edge
 */
-int32_t findInEdgeVector(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>> vec) {
+int32_t findInEdgeVector(uint32_t start, uint32_t end, std::vector<std::shared_ptr<Edge>> vec) {
   for (uint32_t i = 0; i < vec.size(); ++i)
-    if ((vec.at(i)->start == start && vec.at(i)->end == end) || (vec.at(i)->start == end && vec.at(i)->end == start))
+    if ((vec.at(i)->start->id == start && vec.at(i)->end->id == end) || (vec.at(i)->start->id == end && vec.at(i)->end->id == start))
       return i;
   return -1;
 }
@@ -107,16 +113,14 @@ std::shared_ptr<Edge> findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector
   for(uint32_t i = 0; i < adjacencyList[edgeStart].size(); ++i) {
     if (adjacencyList[edgeStart].at(i) == nullptr) {
       std::cerr << "Error: adjacencyList[" << edgeStart << "].at(" << i << ") returns nullpointer" << std::endl;
-      // return nullptr;
+      return nullptr;
     }
-      if (adjacencyList[edgeStart].at(i)->end->id == edgeEnd) //TODO should be ok, bc we have 2 copies of this edge
-        return adjacencyList[edgeStart].at(i);
+    if (adjacencyList[edgeStart].at(i)->end->id == edgeEnd) //TODO should be ok, bc we have 2 copies of this edge
+      return adjacencyList[edgeStart].at(i);
   }
   std::cerr << "Error: findEdge returns nullpointer for "<< edgeStart << " - " << edgeEnd << std::endl;
   return nullptr;
 }
-
-
 
 /*
 Resets all non zero edges to edges from adjacencyList.
@@ -211,11 +215,9 @@ std::shared_ptr<Edge> findZeroEdgeInAdjacentTo(uint32_t idx, std::vector<std::sh
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[idx].size(); ++i)
     if (localCopyOfAdjacencyList[idx].at(i)->weight == 0)
       return localCopyOfAdjacencyList[idx].at(i);
-
   std::cerr << "Error: findZeroEdgeInAdjacentTo returns nullptr; searched index: " << idx << std::endl;
   return nullptr;
 }
-
 
 /*
 Returns number of edges in clique of |V| = numberOfNodes
@@ -231,7 +233,7 @@ uint32_t numberOfEdgesInClique(uint32_t numberOfNodes) {
 /*
 Removes single edge instance from adjacency list, used as helper function for removeEdgeFromAdjacencyList
 */
-void removeSingeEdgeFromAdjacencyList(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>>*& adjList) {
+void removeSingleEdgeFromAdjacencyList(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>>*& adjList) {
   std::shared_ptr<Edge> edge = findInEdgeVectorAndReturnValue(start, end, adjList[start->id]);
   if (edge != nullptr) {
     adjList[start->id].erase(std::remove(adjList[start->id].begin(), adjList[start->id].end(), edge), adjList[start->id].end());
@@ -244,8 +246,8 @@ void removeSingeEdgeFromAdjacencyList(std::shared_ptr<Node> start, std::shared_p
 Removes both instances of edge from adjacency list
 */
 void removeEdgeFromAdjacencyList(std::shared_ptr<Edge> e, std::vector<std::shared_ptr<Edge>>*& adjList) {
-  removeSingeEdgeFromAdjacencyList(e->start, e->end, adjList);
-  removeSingeEdgeFromAdjacencyList(e->end, e->start, adjList);
+  removeSingleEdgeFromAdjacencyList(e->start, e->end, adjList);
+  removeSingleEdgeFromAdjacencyList(e->end, e->start, adjList);
 }
 
 /*
@@ -281,7 +283,7 @@ void addNodeIfNotAlreadyIn(uint32_t nodeId, std::vector<uint32_t>& vec, uint32_t
 Adds edge to given vector if it is not already in and increases counter
 */
 void addEdgeIfNotAlreadyIn(std::shared_ptr<Edge> edge, std::vector<std::shared_ptr<Edge>>& vec, uint32_t& counter) {
-  int32_t repetitionCheck = findInEdgeVector(edge->start, edge->end, vec);
+  int32_t repetitionCheck = findInEdgeVector(edge->start->id, edge->end->id, vec);
   if (repetitionCheck == -1) {
     vec.push_back(edge);
     ++counter;
