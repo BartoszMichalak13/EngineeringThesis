@@ -18,6 +18,8 @@ In all steps above if there are multiple answers to choose from (e.g. multiple m
 TODO Possible imporvements: what if we create not a clique, but a "normal" graph, we use same method, but we do not contract edges
 We may check basic algorithm and my changed version
 Most likely (almost obvoiusly) it will only change execution time, not resulting weight of Steiner Tree
+
+TODO zbadac naraz wszystkie shortestPath dla danego wierzcholka tj. zwykły dijkstra, powinno być szybiciej
 */
 std::shared_ptr<Graph> Graph::KouMarkowskyBerman(std::vector<uint32_t> terminals) {
   std::shared_ptr<Graph> self = shared_from_this();
@@ -95,6 +97,8 @@ std::shared_ptr<Graph> Graph::KouMarkowskyBerman(std::vector<uint32_t> terminals
   std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfTreeNodes];
   copyAdjacencyListFromGraphWithNewNodeInstances(ts, localCopyOfAdjacencyList);
 
+  ts->printAdajcencyListFromGraph();
+  std::cout << "ts.adjList" << std::endl;
   bool foundDanglindBnrach = false;
   bool continueSearch = true;
   //TODO delete leaves

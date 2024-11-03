@@ -235,6 +235,8 @@ Removes single edge instance from adjacency list, used as helper function for re
 */
 void removeSingleEdgeFromAdjacencyList(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>>*& adjList) {
   std::shared_ptr<Edge> edge = findInEdgeVectorAndReturnValue(start, end, adjList[start->id]);
+  std::cout << "removing edge: " << std::endl;
+  printEdge(edge);
   if (edge != nullptr) {
     adjList[start->id].erase(std::remove(adjList[start->id].begin(), adjList[start->id].end(), edge), adjList[start->id].end());
   } else {
