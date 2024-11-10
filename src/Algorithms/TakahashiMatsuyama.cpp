@@ -4,6 +4,13 @@
 #include "helpers.hpp"
 #include "debugPrints.hpp"
 
+//TODO repair, sometimes not acyclic
+/*
+Edges in  tmpTreeEdges:
+5->9; 12->5; 0->12; 7->0; 5->0; 9->8;
+*/
+
+
 /*difference between prim -
 1. we update weights in edges, based on distance to beg. node
 2. in this variation of TakahashiMatsuyama we search just untill we meet node we search for
@@ -101,7 +108,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
           oldPred = e->pred;
           embedEdgeIntoTree(e, localCopyOfAdjacencyList, adjacencyList, tmpTreeEdges);
         } // untill we reach beginning of the path
-        resetCopyOfAdjacencyList(localCopyOfAdjacencyList, self); //it should reset visitied status
+        resetVisitedStatusInCopyOfAdjacencyList(localCopyOfAdjacencyList, self); //it should reset visitied status
       } else { // aka terminal not found
         searchNeighboursV2(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
       }
@@ -112,8 +119,9 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
   for (uint32_t i = 0; i < tmpTreeEdges.size(); ++i)
     totalWeight += tmpTreeEdges.at(i).weight;
 
-
-  std::cout << "TakahashiMatsuyama totalWeight = " << totalWeight << std::endl;
+  if (printFlag) {
+    std::cout << "TakahashiMatsuyama totalWeight = " << totalWeight << std::endl;
+  }
   for (uint32_t i = 0; i < originalTerminals.size(); ++i) {
     bool found = false;
     for (uint32_t j = 0; j < tmpTreeEdges.size(); ++j) {

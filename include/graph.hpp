@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <queue>
+#include <utility>
 #include "node.hpp"
 
 const uint32_t maxEdgeWeight = 1024;
@@ -57,7 +58,7 @@ class Graph : public std::enable_shared_from_this<Graph> { // TODO doczytaj o  s
     uint32_t numberOfEdges;
     std::vector<std::shared_ptr<Edge>>* adjacencyList;
     bool printFlag;
-    void bfs();
+    bool bfs();
     void printAdajcencyListFromGraph();
     //prev private above
 
@@ -72,22 +73,16 @@ class Graph : public std::enable_shared_from_this<Graph> { // TODO doczytaj o  s
     void printData();
     bool checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id);
     uint32_t graphTotalCost();
-    // void copyAdjacencyList(std::vector<std::shared_ptr<Edge>>*&  copyOfAdjacencyList);
     std::vector<uint32_t> generateTerminals(uint32_t numberOfTerminals);
-    // std::shared_ptr<std::vector<std::shared_ptr<Edge>>> ShortestPath(uint32_t node1, uint32_t node2, std::vector<std::shared_ptr<Edge>>* &localCopyOfAdjacencyList);
     std::shared_ptr<std::vector<std::shared_ptr<Edge>>> ShortestPath(uint32_t node1, uint32_t node2);
-    void searchNeighbours(
-        std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> &toVisit,
-        std::vector<std::shared_ptr<Edge>>* &localCopyOfAdjacencyList,
-        uint32_t nodeIndex,
-        std::shared_ptr<Edge> currentEdge);
     void searchNeighboursV2(
         std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> &toVisit,
         std::vector<std::shared_ptr<Edge>>* &localCopyOfAdjacencyList,
         uint32_t nodeIndex,
         std::shared_ptr<Edge> currentEdge);
 
-    bool isConnected();
+    std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> AllPairsShortestPath(std::vector<uint32_t> terminals);
+    std::pair<bool,bool> isTree();
     std::shared_ptr<Graph> TakahashiMatsuyama(std::vector<uint32_t> terminals);
     std::shared_ptr<Graph> KouMarkowskyBerman(std::vector<uint32_t> terminals);
     std::shared_ptr<Graph> PrimMST(); //if it is suppose to return graph we either create childClass named tree or add another constructor for list of edges and nodes to populate the new graph

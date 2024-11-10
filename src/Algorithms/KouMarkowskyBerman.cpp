@@ -29,24 +29,16 @@ std::shared_ptr<Graph> Graph::KouMarkowskyBerman(std::vector<uint32_t> terminals
   const uint32_t numberOfCliqueEdges = numberOfEdgesInClique(numberOfSteinerPoints);
   
   std::vector<std::shared_ptr<Edge>> ShortestPaths;
-  std::shared_ptr<std::vector<std::shared_ptr<Edge>>>* tmpShortestPaths = new std::shared_ptr<std::vector<std::shared_ptr<Edge>>>[numberOfCliqueEdges];
-
-  uint32_t currentShortestPathIdx = 0;
-  for (uint32_t i = 0; i < numberOfSteinerPoints; ++i) {
-    for (uint32_t j = i + 1; j < numberOfSteinerPoints; ++j) {
-      tmpShortestPaths[currentShortestPathIdx] = ShortestPath(terminals.at(i), terminals.at(j));//, localCopyOfAdjacencyList);
-      ++currentShortestPathIdx;
-    }
-  }
+  std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> tmpShortestPaths = AllPairsShortestPath(terminals);// new std::shared_ptr<std::vector<std::shared_ptr<Edge>>>[numberOfCliqueEdges];
 
   for (uint32_t i = 0; i < numberOfCliqueEdges; ++i) {
     uint32_t shortestPathWeight = 0;
-    for (uint32_t j = 0; j < tmpShortestPaths[i]->size(); ++j) {
-      shortestPathWeight += tmpShortestPaths[i]->at(j)->weight;
+    for (uint32_t j = 0; j < tmpShortestPaths.at(i)->size(); ++j) {
+      shortestPathWeight += tmpShortestPaths.at(i)->at(j)->weight;
     }
     //tmpShortestPaths is "kinda" inverted
-    std::shared_ptr<Node> start = tmpShortestPaths[i]->at(0)->end;
-    std::shared_ptr<Node> end = tmpShortestPaths[i]->at(tmpShortestPaths[i]->size() - 1)->start;
+    std::shared_ptr<Node> start = tmpShortestPaths.at(i)->at(0)->end;
+    std::shared_ptr<Node> end = tmpShortestPaths.at(i)->at(tmpShortestPaths.at(i)->size() - 1)->start;
     ShortestPaths.push_back(std::shared_ptr<Edge>(new Edge(start, shortestPathWeight, end)));
   }
   std::shared_ptr<Graph> g1(new Graph(terminals, ShortestPaths, numberOfSteinerPoints, numberOfCliqueEdges, printFlag));
@@ -65,10 +57,10 @@ std::shared_ptr<Graph> Graph::KouMarkowskyBerman(std::vector<uint32_t> terminals
       uint32_t end = t1->adjacencyList[i].at(j)->end->id;
       int32_t idx = findInEdgeVector(start, end, ShortestPaths);
       if (idx > -1) {
-        for (uint32_t k = 0; k < tmpShortestPaths[idx]->size(); ++k) {
+        for (uint32_t k = 0; k < tmpShortestPaths.at(idx)->size(); ++k) {
           //TODO make part below more transparent possibly add addEdgeIfNotAlreadyIn
           //we can do that bc ShortestPaths.at(i) corresponds to tmpShortestPaths[i]
-          std::shared_ptr<Edge> e = tmpShortestPaths[idx]->at(k);
+          std::shared_ptr<Edge> e = tmpShortestPaths.at(idx)->at(k);
           int32_t repetitionCheck = findInEdgeVector(e->start->id, e->end->id, treeEdges);
           if (repetitionCheck == -1) {
             treeEdges.push_back(e);
@@ -97,8 +89,8 @@ std::shared_ptr<Graph> Graph::KouMarkowskyBerman(std::vector<uint32_t> terminals
   std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfTreeNodes];
   copyAdjacencyListFromGraphWithNewNodeInstances(ts, localCopyOfAdjacencyList);
 
-  ts->printAdajcencyListFromGraph();
-  std::cout << "ts.adjList" << std::endl;
+  // ts->printAdajcencyListFromGraph();
+  // std::cout << "ts.adjList" << std::endl;
   bool foundDanglindBnrach = false;
   bool continueSearch = true;
   //TODO delete leaves

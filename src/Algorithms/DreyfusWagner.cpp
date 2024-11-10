@@ -10,7 +10,7 @@
 #include <vector>
 #include <memory>
 
-using namespace std;
+// using namespace std;
 
 #define max 10
 
@@ -46,7 +46,7 @@ void shortest(int i, int j)
   if (k > 0)
   {
     shortest(i, k);
-    cout << "  " << k << "  ";
+    std::cout << "  " << k << "  ";
     shortest(k, j);
   }
 }
@@ -66,13 +66,13 @@ E = 4
 {2,3,4}
 numberOfSubsets of size r = n!/(n-r)!*r!*/
 
-map< set <int>, int> subsetMap;
+std::map<std::set <int>, int> subsetMap;
 
-vector< set< int > > generateSubsets(vector<int> C, int n,int graphsize)
+std::vector<std::set<int>> generateSubsets(std::vector<int> C, int n,int graphsize)
 {
   int count = pow(2, n);
 
-  vector<set <int> > allSubsets;
+  std::vector<std::set<int>> allSubsets;
   int subsetIndex = graphsize;
   // The outer for loop will run 2^n times to print all subset .
   // Here variable i will act as a binary counter
@@ -81,7 +81,7 @@ vector< set< int > > generateSubsets(vector<int> C, int n,int graphsize)
   {
     // The inner for loop will run n times , As the maximum number of elements a set can have is n
     // This loop will generate a subset
-    set<int> newSubset;
+    std::set<int> newSubset;
     for (int j = 0; j < n; j++)
     {
       // This if condition will check if jth bit in binary representation of  i  is set or not
@@ -98,30 +98,30 @@ vector< set< int > > generateSubsets(vector<int> C, int n,int graphsize)
       allSubsets.push_back(newSubset);
       //subsetMap[newSubset] = subsetIndex;
       subsetMap.insert(make_pair(newSubset,subsetIndex));
-      cout << "Adding subset with index" << subsetIndex << "\n";
+      std::cout << "Adding subset with index" << subsetIndex << "\n";
       subsetIndex++;
     }
   }
 
   for (auto const &x : subsetMap)
   {
-    cout << "Subset = ";
-    set<int> element = x.first;
+    std::cout << "Subset = ";
+    std::set<int> element = x.first;
     for (auto f : element)
     {
-      cout << f << " ";
+      std::cout << f << " ";
     }
 
-    cout << "\n";
+    std::cout << "\n";
     std::cout << "Index = " << x.second << std::endl;
   }
 
-  cout<<"Completed subsets";
+  std::cout<<"Completed subsets";
 
   return allSubsets;
 }
 
-void initializeSteinerTable(vector<vector<int>> &steinerDistanceTable, vector<vector<int>> &graph, int cSize)
+void initializeSteinerTable(std::vector<std::vector<int>> &steinerDistanceTable, std::vector<std::vector<int>> &graph, int cSize)
 {
   for (int i = 0; i < graph.size(); i++)
   {
@@ -132,10 +132,10 @@ void initializeSteinerTable(vector<vector<int>> &steinerDistanceTable, vector<ve
   }
 }
 
-int fetchIndexofMapofSets(set<int> subset)
+int fetchIndexofMapofSets(std::set<int> subset)
 {
   int key;
-  for(map< set<int> , int >::const_iterator it = subsetMap.begin(); it != subsetMap.end(); ++it)
+  for(std::map<std::set<int>,int >::const_iterator it = subsetMap.begin(); it != subsetMap.end(); ++it)
   {
     if (it -> first == subset)
     {
@@ -146,28 +146,28 @@ int fetchIndexofMapofSets(set<int> subset)
   return key;
 }
 
-int calculateSteiner(vector<int> C, vector<vector<int>> graph, vector<set<int>> allSubsets,int q)
+int calculateSteiner(std::vector<int> C, std::vector<std::vector<int>> graph, std::vector<std::set<int>> allSubsets,int q)
 {
   // Remember that C = Y - {any one element} where Y = {Steiner terminals}
   // Key is index of D and value is distance
   //nodes = {1,2,3,4,5,6,7}
   //D = { {2,3}, {2,4}, {3,4}, {2,3,4} }
   int sizetable = allSubsets.size() + graph.size();
-  vector< vector<int> > steinerDistanceTable(sizetable, vector<int> (graph.size()));
+  std::vector<std::vector<int>> steinerDistanceTable(sizetable, std::vector<int> (graph.size()));
 
   //initialise steiner table
   initializeSteinerTable(steinerDistanceTable, graph, sizetable);
 
   int indexOfSubset = 0;
 
-  set<set<int>>::iterator setIterator; // iterator for the "outer" structure
+  std::set<std::set<int>>::iterator setIterator; // iterator for the "outer" structure
 
   for (int m = 2; m < C.size(); m++)
   {
     // for each subset
     for (int i = 0; i < allSubsets.size(); i++)
     {
-      set<int> elementOfD = allSubsets[i];
+      std::set<int> elementOfD = allSubsets[i];
       if(elementOfD.size() == m)
       {
         indexOfSubset = subsetMap[elementOfD];
@@ -182,7 +182,7 @@ int calculateSteiner(vector<int> C, vector<vector<int>> graph, vector<set<int>> 
         {
           int u = 999 ;
 
-          set<int>::iterator nodeIterator;
+          std::set<int>::iterator nodeIterator;
           for (nodeIterator = elementOfD.begin(); nodeIterator != elementOfD.end(); nodeIterator++)
           {
             // E is being considered as a single number from the set named elementOfD
@@ -190,15 +190,15 @@ int calculateSteiner(vector<int> C, vector<vector<int>> graph, vector<set<int>> 
             int distanceFromEToJ = steinerDistanceTable[E][j];
 
             // get index of the subset D-E
-            cout<<"Getting D-E\n";
-            cout << "J: "<< j << endl;
-            cout << "Element of D value" << distanceFromEToJ << endl;
-            cout << "Value for E is" << E << endl;
+            std::cout<<"Getting D-E\n";
+            std::cout << "J: "<< j << std::endl;
+            std::cout << "Element of D value" << distanceFromEToJ << std::endl;
+            std::cout << "Value for E is" << E << std::endl;
 
-            set<int> DMinusE;
+            std::set<int> DMinusE;
             DMinusE = elementOfD;
 
-            for (set<int>::iterator iter = DMinusE.begin(); iter != DMinusE.end();)
+            for (std::set<int>::iterator iter = DMinusE.begin(); iter != DMinusE.end();)
             {
               if (*iter == E)
               {
@@ -212,7 +212,7 @@ int calculateSteiner(vector<int> C, vector<vector<int>> graph, vector<set<int>> 
             int dist,indexOfSubsetDMinusE;
             if(DMinusE.size() == 1)
             {
-              set<int>::iterator node = DMinusE.begin();
+              std::set<int>::iterator node = DMinusE.begin();
               indexOfSubsetDMinusE = *node;
             }
             else
@@ -220,14 +220,14 @@ int calculateSteiner(vector<int> C, vector<vector<int>> graph, vector<set<int>> 
               indexOfSubsetDMinusE = fetchIndexofMapofSets(DMinusE);
             }
             // get the real value here
-            cout << " indexOfSubsetDMinusE =  " << indexOfSubsetDMinusE <<endl;
+            std::cout << " indexOfSubsetDMinusE =  " << indexOfSubsetDMinusE << std::endl;
             int distanceFromDMinusEToJ = steinerDistanceTable[indexOfSubsetDMinusE][j];
-            cout<<"distanceFromDMinusEToJ = "<< distanceFromDMinusEToJ <<"\n";
+            std::cout<<"distanceFromDMinusEToJ = "<< distanceFromDMinusEToJ <<"\n";
             dist = distanceFromEToJ + distanceFromDMinusEToJ;
-            cout<<"Total Distance = "<< dist <<"\n";
-            u = min(u, dist);
+            std::cout<<"Total Distance = "<< dist <<"\n";
+            u = std::min(u, dist);
 
-            cout << "U is" << u <<endl;
+            std::cout << "U is" << u << std::endl;
           }
 
           int val;
@@ -237,9 +237,9 @@ int calculateSteiner(vector<int> C, vector<vector<int>> graph, vector<set<int>> 
             val = graph[i][j];
             if(val != 0 )
             {
-              steinerDistanceTable[indexOfSubset][i] = min(steinerDistanceTable[indexOfSubset][i],val + u);
-              cout << "I is" << i << endl;
-              cout << "Steiner table data is is" << steinerDistanceTable[indexOfSubset][i] << endl;
+              steinerDistanceTable[indexOfSubset][i] = std::min(steinerDistanceTable[indexOfSubset][i],val + u);
+              std::cout << "I is" << i << std::endl;
+              std::cout << "Steiner table data is is" << steinerDistanceTable[indexOfSubset][i] << std::endl;
             }
           }
         }
@@ -253,14 +253,14 @@ int calculateSteiner(vector<int> C, vector<vector<int>> graph, vector<set<int>> 
   {
     int u = 999;
 
-    set <int> C1 (C.begin(),C.end());
+    std::set <int> C1 (C.begin(),C.end());
 
-    for (set<int>::iterator setiter = C1.begin(); setiter != C1.end();setiter++)
+    for (std::set<int>::iterator setiter = C1.begin(); setiter != C1.end();setiter++)
     {
       int E = *setiter;
-      set<int> subsetCMinusi (C.begin(), C.end());
+      std::set<int> subsetCMinusi (C.begin(), C.end());
       int distEJ = graph[E][j];
-      for (set<int>::iterator iter = subsetCMinusi.begin(); iter != subsetCMinusi.end();)
+      for (std::set<int>::iterator iter = subsetCMinusi.begin(); iter != subsetCMinusi.end();)
       {
         if (*iter == E)
         {
@@ -278,77 +278,77 @@ int calculateSteiner(vector<int> C, vector<vector<int>> graph, vector<set<int>> 
       }
       else
       {
-        set<int>::iterator node = subsetCMinusi.begin();
+        std::set<int>::iterator node = subsetCMinusi.begin();
         indexOfSubsetCMinusi = *node;
       }
 
       int val = steinerDistanceTable[indexOfSubsetCMinusi][j];
-      cout << " Val: " << val <<endl;
-      cout << "E is:  " << E;
-      cout << "J: "<<j<<endl;
-      cout << " distEJ: " << distEJ <<endl;
-      cout << " IndexSubset: " << indexOfSubsetCMinusi;
+      std::cout << " Val: " << val << std::endl;
+      std::cout << "E is:  " << E;
+      std::cout << "J: "<< j << std::endl;
+      std::cout << " distEJ: " << distEJ << std::endl;
+      std::cout << " IndexSubset: " << indexOfSubsetCMinusi;
 
-      u = min(u,distEJ + val );
+      u = std::min(u,distEJ + val );
       
-      cout << " U is: " <<u << endl;
+      std::cout << " U is: " <<u << std::endl;
     }
 
-  cout << " U final is:" <<u;
+  std::cout << " U final is:" <<u;
   int value = graph[q][j];
-  cout<< "value is: " << value <<endl;
+  std::cout << "value is: " << value << std::endl;
   if (value < 999 && value > 0 )
   {
-      v = min(v,value+u);
+      v = std::min(v,value+u);
   }
-  cout << " V is: " << v << endl;
+  std::cout << " V is: " << v << std::endl;
 
   }
   for(int i = 0 ; i < steinerDistanceTable.size() ; i++ )
   {
     for(int j = 0; j < graph.size() ; j++)
     {
-      cout << " " <<steinerDistanceTable[i][j];
+      std::cout << " " <<steinerDistanceTable[i][j];
     }
-    cout << " " <<endl;
+    std::cout << " " << std::endl;
   }
 
 
-  cout<<"Minimum Steiner Distance"<<v<<"\n";
+  std::cout << "Minimum Steiner Distance" << v << "\n";
   return v;
 }
 
 void testSubsets()
 {
   int n;
-  vector<set<int>> allSubsets;
-  set<int>::iterator it;
+  std::vector<std::set<int>> allSubsets;
+  std::set<int>::iterator it;
 
-  cout << "Enter size of the set\n";
-  cin >> n;
+  std::cout << "Enter size of the set\n";
+  std::cin >> n;
 
-  vector<int> arr(n);
+  std::vector<int> arr(n);
 
-  cout << "Enter Elements of the set\n";
+  std::cout << "Enter Elements of the set\n";
   for (int i = 0; i < n; i++)
-    cin >> arr[i];
+    std::cin >> arr[i];
 
   // allSubsets = generateSubsets(arr, n);
 
   for (int i = 0; i < allSubsets.size(); i++)
   {
-    set<int> numbersSet = allSubsets[i];
+    std::set<int> numbersSet = allSubsets[i];
     for (it = numbersSet.begin(); it != numbersSet.end(); it++)
     {
-      cout << ' ' << *it;
+      std::cout << ' ' << *it;
     }
-    cout << "\n";
+    std::cout << "\n";
   }
 }
 
 int main()
 {
-  vector<vector<int> > graph;
+  std::vector<std::vector<int>> graph;
   int ySize;
 
   int a[][10] =  {{0, 3, 1, infi, infi},
@@ -360,7 +360,7 @@ int main()
   allpairshort(a, 5);
 
   for (int i = 0; i < 5; i++){        //creating row
-    graph.push_back(vector<int>());
+    graph.push_back(std::vector<int>());
   }
 
   for (int n = 0; n < 5; n++){        //creating columns for the rows
@@ -374,21 +374,21 @@ int main()
     //  vec[n].push_back(arr[m][n]);
       vec[m][n] = a[m][n];
     }
-    cout << "\n";
+    std::cout << "\n";
   }
 
-  cout << "Enter size of terminals\n";
-  cin >> ySize;
-  vector<int> y(ySize, 0);
+  std::cout << "Enter size of terminals\n";
+  std::cin >> ySize;
+  std::vector<int> y(ySize, 0);
   for (int i = 0; i < ySize; i++)
   {
-    cin >> y[i];
+    std::cin >> y[i];
   }
 
   int q = y[0];
   y.erase(y.begin());
 
-  set<set<int> > allSubsets = generateSubsets(y, y.size());
+  std::set<std::set<int>> allSubsets = generateSubsets(y, y.size());
 
   calculateSteiner(y, graph, allSubsets);
 

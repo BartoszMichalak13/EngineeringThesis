@@ -11,7 +11,8 @@ std::shared_ptr<Edge> findInEdgeVectorAndReturnValue(std::shared_ptr<Node> start
 int32_t findInArray(uint32_t value, std::shared_ptr<Node>* array, uint32_t arraySize);
 int32_t findInTmpTree(uint32_t edgeStart, uint32_t edgeEnd, std::vector<PseudoEdge> vec);
 std::shared_ptr<Edge> findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<std::shared_ptr<Edge>>* adjacencyList);
-void resetCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList, std::shared_ptr<Graph> g);
+void resetVisitedStatusInCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList, std::shared_ptr<Graph> g);
+void fullResetCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList, std::shared_ptr<Graph> g);
 void updateWeight(std::shared_ptr<Edge>& e, uint32_t weight, std::vector<std::shared_ptr<Edge>>*& adjList);
 void updatePred(std::shared_ptr<Edge>& e, std::shared_ptr<Edge> pred, std::vector<std::shared_ptr<Edge>>* adjList);
 void updatePredToLoop(std::shared_ptr<Edge>& e, std::vector<std::shared_ptr<Edge>>* adjList);

@@ -112,22 +112,44 @@ std::vector<uint32_t> Graph::generateTerminals(uint32_t numberOfTerminals) {
   return terminals;
 }
 
-void Graph::bfs() {
+// void Graph::bfs() {
+//   std::queue<std::shared_ptr<Node>> toVisit;
+//   std::shared_ptr<Node> currentNode(vertices[0]);
+//   toVisit.push(currentNode);
+//   while (!toVisit.empty()) {
+//     currentNode = toVisit.front();
+//     toVisit.pop();
+//     currentNode->visited = true;
+//     int32_t idx = findInArray(currentNode->id, vertices, numberOfNodes);
+//     for (const auto& edge : adjacencyList[idx]) {
+//       if(!edge->end->visited) {
+//         toVisit.push(edge->end);
+//         edge->end->visited = true;
+//       }
+//     }
+//   }
+// }
+
+bool Graph::bfs() {
+  bool isAcyclic = true;
   std::queue<std::shared_ptr<Node>> toVisit;
   std::shared_ptr<Node> currentNode(vertices[0]);
   toVisit.push(currentNode);
   while (!toVisit.empty()) {
     currentNode = toVisit.front();
     toVisit.pop();
+    if (currentNode->visited) {
+      isAcyclic = false;
+    }
     currentNode->visited = true;
     int32_t idx = findInArray(currentNode->id, vertices, numberOfNodes);
     for (const auto& edge : adjacencyList[idx]) {
-      if(!edge->end->visited) {
+      if (!edge->end->visited) {
         toVisit.push(edge->end);
-        edge->end->visited = true;
       }
     }
   }
+  return isAcyclic;
 } 
 
 /*
@@ -190,6 +212,128 @@ void Graph::searchNeighboursV2(
       }
     }
   }
+}
+
+/*
+All pairs shortest paths
+vector of vectors of Edges
+
+TODO does it always work as intended?
+*/
+// std::shared_ptr<std::vector<std::shared_ptr<Edge>>>* Graph::AllPairsShortestPath(std::vector<uint32_t> terminals) {
+std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairsShortestPath(std::vector<uint32_t> terminals) {
+
+  // get graph instance
+  std::shared_ptr<Graph> self = shared_from_this();
+
+  // make copy of terminals
+  std::vector<uint32_t> originalTerminals;
+  for (uint32_t i = 0; i < terminals.size(); ++i)
+    originalTerminals.push_back(terminals.at(i));
+
+
+  // create copy of adjacency list (to make changes in this copy and not in original instance of adjacency list)
+  std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
+  copyAdjacencyListFromGraphWithNewNodeInstances(self, localCopyOfAdjacencyList);
+
+  // create priority queue
+  std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> toVisit;
+
+  // total number of shortest paths to find
+  const uint32_t numberOfCliqueEdges = numberOfEdgesInClique(terminals.size());
+
+  // create structure for all pairs of shortest paths
+  std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> allPairsOfShortestPaths(0);
+  uint32_t allPairsOfShortestPathsCurrentIdx = 0;
+
+  for ( uint32_t currentStartingNodeIndex = 0;
+        currentStartingNodeIndex < originalTerminals.size() - 1;
+        ++currentStartingNodeIndex) {
+
+    // create shortest path structure
+    std::shared_ptr<std::vector<std::shared_ptr<Edge>>> shortestPath = std::make_shared<std::vector<std::shared_ptr<Edge>>>();
+
+    /*
+      This is the main node from which Dijsktra algorithm starts
+      It's always 0 as we truncate terminals on the go
+    */
+    uint32_t startingNode = terminals.at(0);
+    terminals.erase(terminals.begin() + 0);
+
+    // find instance of startingNode in vertices
+    int32_t startingNodeIdx = findInArray(startingNode, vertices, numberOfNodes);
+    if (startingNodeIdx == -1) {
+      std::cerr << "Error: Node " << startingNode << " not found in ShortestPath"  << std::endl;
+      return std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>>();
+    }
+
+    //add all neighbours of startingNode
+    for (uint32_t i = 0; i < localCopyOfAdjacencyList[startingNodeIdx].size(); ++i)
+      toVisit.push(localCopyOfAdjacencyList[startingNodeIdx].at(i));
+    vertices[startingNodeIdx]->visited = true; //TODO does it always work?
+
+    while (!toVisit.empty() && !terminals.empty()) {
+      std::shared_ptr<Edge> e = toVisit.top();
+      toVisit.pop();
+      e->end->visited = true;
+      uint32_t nextNodeIndex = e->end->id;
+
+      int32_t idx = findInUintVector(nextNodeIndex, terminals);
+      if (idx > -1) {
+        std::shared_ptr<Edge> copyOfe = e;
+        terminals.erase(terminals.begin() + idx);
+        // std::cout << "adding path from " << startingNode << " to " << nextNodeIndex << std::endl;
+
+        //TODO can we put that code in while part? (same in Takahashi)
+        std::shared_ptr<Edge> oldPred = e->pred;
+        std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
+        shortestPath->push_back(edg);
+
+        // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
+        // while (oldPred != nullptr && e->start->id != startingNode) {
+        while (oldPred != nullptr && (e->start->id != startingNode && e->end->id != startingNode)) {
+          e = oldPred;
+          oldPred = e->pred;
+          std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
+          shortestPath->push_back(edg);
+        } // untill we reach beginning of the path
+        allPairsOfShortestPaths.push_back(shortestPath);
+
+        // reset shortest path
+        shortestPath = std::make_shared<std::vector<std::shared_ptr<Edge>>>();
+
+        // reset e to prev state to use it in searchNeighboursV2
+        e = copyOfe;
+      }
+      searchNeighboursV2(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
+    }
+    if (!terminals.empty()) {
+      std::cerr << "Error: Could not find path between " << startingNode << " and ";
+      printNodeVector(terminals);
+
+      delete[] localCopyOfAdjacencyList;
+      localCopyOfAdjacencyList = nullptr;
+      return std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>>();
+    } else {
+
+      // reset terminals to their begining state - nodes already checked
+      for (uint32_t i = currentStartingNodeIndex + 1; i < originalTerminals.size(); ++i)
+        terminals.push_back(originalTerminals.at(i));
+
+      // make it clear for next Dijkstra iteration
+      resetVisitedStatus();
+
+      // reset priority queue
+      while(!toVisit.empty())
+        toVisit.pop();
+
+      // reset localCopyOfAdjacencyList NOTE if this doesn't work, put new localCopyOfAdjacencyList in for
+      fullResetCopyOfAdjacencyList(localCopyOfAdjacencyList, self);
+    }
+
+  }
+  // std::cout << "numberOfCliqueEdges "<< numberOfCliqueEdges << " vs " << "allPairsOfShortestPaths.size() " << allPairsOfShortestPaths.size() << std::endl;
+  return allPairsOfShortestPaths;
 }
 
 //TODO centralny punkt majacy polaczenie do all innych w grafie, sprawdz jak to sie zachowuje
@@ -306,7 +450,9 @@ std::shared_ptr<Graph> Graph::PrimMST() {// do it with priority Queue, maybe my 
       std::cout << tmptreeEdges.at(i)->start->id << "->" <<  tmptreeEdges.at(i)->end->id << "; ";
     std::cout << std::endl;
   }
-  std::cout << "PimMST totalWeight = " << totalWeight << std::endl;
+  if (printFlag) {
+    std::cout << "PimMST totalWeight = " << totalWeight << std::endl;
+  }
   resetVisitedStatus();
   return std::shared_ptr<Graph>(new Graph(nodes, tmptreeEdges, numberOfNodes, numberOfNodes - 1, printFlag));
 }
@@ -333,15 +479,31 @@ void Graph::printVisitedStatus() {
     std::cout << "node " << i << " visited = " << vertices[i]->visited << std::endl;
 }
 
-bool Graph::isConnected() {
+// bool Graph::isConnected() {
+//   resetVisitedStatus();
+//   bool isAcyclic = bfs();
+//   bool returnValue = true;
+//   for (uint32_t i = 0; i < numberOfNodes; ++i)
+//     if (!vertices[i]->visited)
+//       return false;
+//   resetVisitedStatus();
+//   return returnValue;
+// }
+
+/*
+Checks if graph is acyclic and connected
+.first is true when graph is acyclic
+.second is true when graph is connected
+*/
+std::pair<bool,bool> Graph::isTree() {
   resetVisitedStatus();
-  bfs();
-  bool returnValue = true;
+  bool isAcyclic = bfs();
+  bool isConnected = true;
   for (uint32_t i = 0; i < numberOfNodes; ++i)
     if (!vertices[i]->visited)
-      return false;
+      isConnected = false;
   resetVisitedStatus();
-  return returnValue;
+  return std::pair<bool,bool>(isAcyclic, isConnected);
 }
 
 bool Graph::checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id) {

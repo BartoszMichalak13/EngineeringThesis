@@ -126,13 +126,30 @@ std::shared_ptr<Edge> findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector
 Resets all non zero edges to edges from adjacencyList.
 For Edges with weight == 0 we reset: visited(end and start), pred, succ
 */
-void resetCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList,  std::shared_ptr<Graph> g) {
+void resetVisitedStatusInCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList,  std::shared_ptr<Graph> g) {
   for (uint32_t i = 0; i < g->numberOfNodes; ++i) {
     for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
       if (localCopyOfAdjacencyList[i].at(j)->weight)
         localCopyOfAdjacencyList[i].at(j)->weight = g->adjacencyList[i].at(j)->weight;
       localCopyOfAdjacencyList[i].at(j)->end->visited = false;
       localCopyOfAdjacencyList[i].at(j)->start->visited = false;
+    }
+  }
+}
+
+/*
+Resets all non zero edges to edges from adjacencyList.
+For Edges with weight == 0 we reset: visited(end and start), pred, succ
+*/
+void fullResetCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList,  std::shared_ptr<Graph> g) {
+  for (uint32_t i = 0; i < g->numberOfNodes; ++i) {
+    for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
+      if (localCopyOfAdjacencyList[i].at(j)->weight)
+        localCopyOfAdjacencyList[i].at(j)->weight = g->adjacencyList[i].at(j)->weight;
+      localCopyOfAdjacencyList[i].at(j)->end->visited = false;
+      localCopyOfAdjacencyList[i].at(j)->start->visited = false;
+      localCopyOfAdjacencyList[i].at(j)->pred = nullptr;
+      localCopyOfAdjacencyList[i].at(j)->succ = nullptr;
     }
   }
 }
