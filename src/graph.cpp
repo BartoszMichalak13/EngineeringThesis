@@ -240,11 +240,11 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
   std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> toVisit;
 
   // total number of shortest paths to find
-  const uint32_t numberOfCliqueEdges = numberOfEdgesInClique(terminals.size());
+  // const uint32_t numberOfCliqueEdges = numberOfEdgesInClique(terminals.size());
 
   // create structure for all pairs of shortest paths
   std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> allPairsOfShortestPaths(0);
-  uint32_t allPairsOfShortestPathsCurrentIdx = 0;
+  // uint32_t allPairsOfShortestPathsCurrentIdx = 0;
 
   for ( uint32_t currentStartingNodeIndex = 0;
         currentStartingNodeIndex < originalTerminals.size() - 1;
@@ -511,4 +511,41 @@ bool Graph::checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id) {
     if (edge->end->id == node2Id)
       return true;
   return false;
+}
+
+//TODO works only on starting graph as adj[src] makes assumption that edge.start == src
+std::vector<std::vector<uint32_t>> Graph::toAdjacencyMatrix() {
+
+  // deafault fill with inf
+  std::vector<std::vector<uint32_t>> adjacencyMatrix(numberOfNodes, std::vector<uint32_t>(numberOfNodes, std::numeric_limits<uint32_t>::infinity()));
+
+  // Fill the diagonal with 0s (distance from each vertex to itself)
+  for (uint32_t i = 0; i < numberOfNodes; i++) {
+    adjacencyMatrix[i][i] = 0;
+  }
+
+  // Copy edges from adjacency list to adjacency matrix
+  for (uint32_t src = 0; src < numberOfNodes; src++) {
+    for (const auto& edge : adjacencyList[src]) {
+      // uint32_t start = edge->start->id;
+      uint32_t end = edge->end->id;
+      uint32_t weight = edge->weight;
+      adjacencyMatrix[src][end] = weight;
+      adjacencyMatrix[end][src] = weight; // Undirected graph
+    }
+  }
+
+  return adjacencyMatrix;
+}
+
+void Graph::printMatrix(const std::vector<std::vector<uint32_t>>& matrix) {
+  for (const auto& row : matrix) {
+    for (uint32_t val : row) {
+      if (val == std::numeric_limits<uint32_t>::infinity())
+        std::cout << "INF ";
+      else
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+  }
 }

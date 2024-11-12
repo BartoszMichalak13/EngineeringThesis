@@ -169,6 +169,18 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
   std::cout << "KouMarkowskyBerman steinerTree: " << durationKMBST.count() << " microseconds" << std::endl;
   std::cout << std::endl;
   std::cout << std::endl;
+
+
+
+
+
+  graph->DreyfusWagner(terminals);
+
+
+
+
+
+
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;
 

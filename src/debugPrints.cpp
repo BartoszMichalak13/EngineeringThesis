@@ -75,6 +75,7 @@ void printEdgeVector(std::vector<std::shared_ptr<Edge>> vec) {
     printEdge(vec.at(i));
 }
 
+//TODO ta nazwa kłamie
 void printNodeVector(std::vector<uint32_t> vec) {
   std::cout << "print nodes" << std::endl;
   for (uint32_t i = 0; i < vec.size(); ++i)

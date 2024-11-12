@@ -323,3 +323,11 @@ void embedEdgeIntoTree(
   std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
   addTotmptreeEdgesIfNotAlreadyIn(tmpTreeEdges, edg);
 }
+
+std::shared_ptr<std::vector<uint32_t>> verticesToUint(std::shared_ptr<Node>* vertices, uint32_t numberOfNodes) {
+  std::shared_ptr<std::vector<uint32_t>> vertexIdVector = std::make_shared<std::vector<uint32_t>>();
+  for (uint32_t i = 0; i < numberOfNodes; ++i)
+    vertexIdVector->push_back(vertices[i]->id);
+  return vertexIdVector;
+}
+

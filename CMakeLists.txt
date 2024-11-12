@@ -23,4 +23,5 @@ add_executable(GraphGenerator
   src/algorithmRunner.cpp
   src/Algorithms/TakahashiMatsuyama.cpp
   src/Algorithms/KouMarkowskyBerman.cpp
+  src/Algorithms/DreyfusWagner.cpp
 )

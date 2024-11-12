@@ -1,6 +1,7 @@
 #ifndef HELPERS_HPP
 #define HELPERS_HPP
 
+//TODO make it more readable
 
 bool compareAdajcencyLists(std::vector<std::shared_ptr<Edge>>* adjList1, std::vector<std::shared_ptr<Edge>>* adjList2, uint32_t listSize);
 // void copyAdjacencyListFromGraph(std::shared_ptr<Graph> graph, std::vector<std::shared_ptr<Edge>>*& copyOfAdjacencyList);
@@ -31,5 +32,8 @@ void embedEdgeIntoTree(
     std::vector<std::shared_ptr<Edge>>* &localCopyOfAdjacencyList,
     std::vector<std::shared_ptr<Edge>>* &adjacencyList,
     std::vector<PseudoEdge> &tmptreeEdges);
+
+//Potentially could be added to Graph functions
+std::shared_ptr<std::vector<uint32_t>> verticesToUint(std::shared_ptr<Node>* vertices, uint32_t numberOfNodes);
 
 #endif
