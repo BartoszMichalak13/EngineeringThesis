@@ -94,3 +94,16 @@ void printAdajcencyListPred(std::vector<std::shared_ptr<Edge>>* adjList, uint32_
     std::cout << std::endl;
   }
 }
+
+
+void printMatrix(const std::vector<std::vector<uint32_t>>& matrix) {
+  for (const auto& row : matrix) {
+    for (uint32_t val : row) {
+      if (val == std::numeric_limits<uint32_t>::max())
+        std::cout << "MAX ";
+      else
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+  }
+}

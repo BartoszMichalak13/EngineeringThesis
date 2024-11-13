@@ -36,4 +36,10 @@ void embedEdgeIntoTree(
 //Potentially could be added to Graph functions
 std::shared_ptr<std::vector<uint32_t>> verticesToUint(std::shared_ptr<Node>* vertices, uint32_t numberOfNodes);
 
+
+uint32_t calculatePathWeight(std::vector<std::shared_ptr<Edge>> path);
+uint32_t findShortestPathAndReturnWeight(
+    std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> shortestPathEdgeVec,
+    uint32_t startId,
+    uint32_t endId);
 #endif

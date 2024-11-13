@@ -517,7 +517,7 @@ bool Graph::checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id) {
 std::vector<std::vector<uint32_t>> Graph::toAdjacencyMatrix() {
 
   // deafault fill with inf
-  std::vector<std::vector<uint32_t>> adjacencyMatrix(numberOfNodes, std::vector<uint32_t>(numberOfNodes, std::numeric_limits<uint32_t>::infinity()));
+  std::vector<std::vector<uint32_t>> adjacencyMatrix(numberOfNodes, std::vector<uint32_t>(numberOfNodes, std::numeric_limits<uint32_t>::max()));
 
   // Fill the diagonal with 0s (distance from each vertex to itself)
   for (uint32_t i = 0; i < numberOfNodes; i++) {
@@ -538,14 +538,3 @@ std::vector<std::vector<uint32_t>> Graph::toAdjacencyMatrix() {
   return adjacencyMatrix;
 }
 
-void Graph::printMatrix(const std::vector<std::vector<uint32_t>>& matrix) {
-  for (const auto& row : matrix) {
-    for (uint32_t val : row) {
-      if (val == std::numeric_limits<uint32_t>::infinity())
-        std::cout << "INF ";
-      else
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-  }
-}

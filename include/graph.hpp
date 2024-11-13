@@ -98,13 +98,13 @@ class Graph : public std::enable_shared_from_this<Graph> { // TODO doczytaj o  s
     uint32_t DreyfusWagner(std::vector<uint32_t> terminals);
     uint32_t calculateSteiner(
         std::vector<uint32_t> C,
-        // std::vector<std::vector<uint32_t>> graph,
+        std::vector<std::vector<uint32_t>> adjMatrix,
         std::vector<std::set<uint32_t>> allSubsets,
         uint32_t q);
 
 
     std::vector<std::vector<uint32_t>> toAdjacencyMatrix();
-    void printMatrix(const std::vector<std::vector<uint32_t>>& matrix);
+    // void printMatrix(const std::vector<std::vector<uint32_t>>& matrix);
 
 
     void printVisitedStatus();

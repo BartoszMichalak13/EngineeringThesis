@@ -154,6 +154,29 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     return;
   }
 
+  // std::cout << std::endl;
+  // std::cout << std::endl;
+  // std::cout << "COSTS:" << std::endl;
+  // std::cout << "starting graph: " << graph->graphTotalCost() << std::endl;
+  // std::cout << "MST: " << mst->graphTotalCost() << std::endl;
+  // std::cout << "TakahashiMatsuyama steinerTree: " << steinerTreeTakahashiMatsuyama->graphTotalCost() << std::endl;
+  // std::cout << "KouMarkowskyBerman steinerTree: " << steinerTreeKouMarkowskyBerman->graphTotalCost() << std::endl;
+  // std::cout << std::endl;
+  // std::cout << std::endl;
+  // std::cout << "Time:" << std::endl;
+  // std::cout << "MST: " << durationMST.count() << " microseconds" << std::endl;
+  // std::cout << "TakahashiMatsuyama steinerTree: " << durationTMST.count() << " microseconds" << std::endl;
+  // std::cout << "KouMarkowskyBerman steinerTree: " << durationKMBST.count() << " microseconds" << std::endl;
+  // std::cout << std::endl;
+  // std::cout << std::endl;
+
+
+
+
+
+  graph->DreyfusWagner(terminals);
+
+
   std::cout << std::endl;
   std::cout << std::endl;
   std::cout << "COSTS:" << std::endl;
@@ -172,14 +195,9 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
 
 
 
+  graph->printAdajcencyListFromGraph();
 
-
-  graph->DreyfusWagner(terminals);
-
-
-
-
-
+  printNodeVector(terminals);
 
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;

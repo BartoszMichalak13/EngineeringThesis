@@ -331,3 +331,64 @@ std::shared_ptr<std::vector<uint32_t>> verticesToUint(std::shared_ptr<Node>* ver
   return vertexIdVector;
 }
 
+
+uint32_t calculatePathWeight(std::vector<std::shared_ptr<Edge>> path) {
+  uint32_t pathWeight = 0;
+    for (const std::shared_ptr<Edge>& edge : path)
+      pathWeight += edge->weight;
+    return pathWeight;
+}
+
+
+uint32_t findShortestPathAndReturnWeight(
+    std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> shortestPathEdgeVec,
+    uint32_t startId,
+    uint32_t endId) {
+
+  for (std::shared_ptr<std::vector<std::shared_ptr<Edge>>>& shortestPath : shortestPathEdgeVec) {
+    if (shortestPath->size() < 2) {
+      if (shortestPath->size() == 1) {
+        return (*(*shortestPath).at(0)).weight;
+      } else {
+        std::cerr << "Path length = " << shortestPath->size() << std::endl;
+        return std::numeric_limits<uint32_t>::max();
+      }
+    } else {
+      Edge e0 = (*(*shortestPath).at(0));
+      Edge e1 = (*(*shortestPath).at(1));
+
+      Edge ePrevToLast = (*(*shortestPath).at(shortestPath->size() - 2));
+      Edge eLast       = (*(*shortestPath).at(shortestPath->size() - 1));
+
+      // search for startId if found do nothing, else skip
+      if (e0.start->id == startId && !(e1.start->id == startId || e1.end->id == startId)) {
+      } else if (e0.end->id == startId && !(e1.start->id == startId || e1.end->id == startId)) {
+      } else {
+        if (eLast.start->id == startId && !(ePrevToLast.start->id == startId || ePrevToLast.end->id == startId)) {
+        } else if (eLast.end->id == startId && !(ePrevToLast.start->id == startId || ePrevToLast.end->id == startId)) {
+        } else { // startId not found
+          continue;
+        }
+      }
+
+      //search for endId if found return path weight, else skip
+      if (e0.start->id == endId && !(e1.start->id == endId || e1.end->id == endId)) {
+        return calculatePathWeight(*shortestPath);
+      } else if (e0.end->id == endId && !(e1.start->id == endId || e1.end->id == endId)) {
+        return calculatePathWeight(*shortestPath);
+      } else {
+        if (eLast.start->id == endId && !(ePrevToLast.start->id == endId || ePrevToLast.end->id == endId)) {
+          return calculatePathWeight(*shortestPath);
+        } else if (eLast.end->id == endId && !(ePrevToLast.start->id == endId || ePrevToLast.end->id == endId)) {
+          return calculatePathWeight(*shortestPath);
+        } else {
+          // endId not found
+          // continue bo moze byc wiele z sciezek ze startId
+          continue;
+        }
+      }   //TODO WRZUC DO UZUPELNIENIA MACIERZY W DREYFUS
+    }
+  }
+  std::cerr << "Path from " << startId << " to " << endId << "not found" << std::endl;
+  return std::numeric_limits<uint32_t>::max();
+}
