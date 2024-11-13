@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
   //tmp solution
   // float density = 0.1;
   // bool printFlag = true;
-  bool printFlag = false;
+  bool printFlag = true;
   std::shared_ptr<Graph> graph = parseInput(argc, argv, numberOfNodes, numberOfEdges, state, printFlag, terminals);
   if(state) 
   {

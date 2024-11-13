@@ -318,10 +318,13 @@ void embedEdgeIntoTree(
     std::vector<std::shared_ptr<Edge>>* &localCopyOfAdjacencyList,
     std::vector<std::shared_ptr<Edge>>* &adjacencyList,
     std::vector<PseudoEdge> &tmpTreeEdges) {
+  std::cout << "adding edg ";
+  printEdge(e);
   updateWeight(e, 0, localCopyOfAdjacencyList);
   updatePredToLoop(e, localCopyOfAdjacencyList);
   std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
   addTotmptreeEdgesIfNotAlreadyIn(tmpTreeEdges, edg);
+
 }
 
 std::shared_ptr<std::vector<uint32_t>> verticesToUint(std::shared_ptr<Node>* vertices, uint32_t numberOfNodes) {

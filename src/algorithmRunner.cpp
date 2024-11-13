@@ -182,8 +182,9 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
 
 
 
-  graph->DreyfusWagner(terminals);
+  uint32_t opt = graph->DreyfusWagner(terminals);
 
+  graph->printAdajcencyListFromGraph();
 
   std::cout << std::endl;
   std::cout << std::endl;
@@ -192,18 +193,19 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
   std::cout << "MST: " << mst->graphTotalCost() << std::endl;
   std::cout << "TakahashiMatsuyama steinerTree: " << steinerTreeTakahashiMatsuyama->graphTotalCost() << std::endl;
   std::cout << "KouMarkowskyBerman steinerTree: " << steinerTreeKouMarkowskyBerman->graphTotalCost() << std::endl;
+  std::cout << "DreyfusWagner(OPT) steinerTree: " << opt << std::endl;
   std::cout << std::endl;
   std::cout << std::endl;
-  std::cout << "Time:" << std::endl;
-  std::cout << "MST: " << durationMST.count() << " microseconds" << std::endl;
-  std::cout << "TakahashiMatsuyama steinerTree: " << durationTMST.count() << " microseconds" << std::endl;
-  std::cout << "KouMarkowskyBerman steinerTree: " << durationKMBST.count() << " microseconds" << std::endl;
-  std::cout << std::endl;
-  std::cout << std::endl;
+  // std::cout << "Time:" << std::endl;
+  // std::cout << "MST: " << durationMST.count() << " microseconds" << std::endl;
+  // std::cout << "TakahashiMatsuyama steinerTree: " << durationTMST.count() << " microseconds" << std::endl;
+  // std::cout << "KouMarkowskyBerman steinerTree: " << durationKMBST.count() << " microseconds" << std::endl;
+  // std::cout << std::endl;
+  // std::cout << std::endl;
 
 
 
-  graph->printAdajcencyListFromGraph();
+  // graph->printAdajcencyListFromGraph();
 
   printNodeVector(terminals);
 

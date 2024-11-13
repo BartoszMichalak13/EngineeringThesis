@@ -181,6 +181,7 @@ uint32_t Graph::graphTotalCost() {
 }
 
 //TODO clear this mess
+//TODO zle value dla sciezki miedzy x i x (petla)
 /*
 Searches neighbourhood of node at nodeIndex, adds it to toVisitupdatePred
 */
@@ -188,7 +189,8 @@ void Graph::searchNeighboursV2(
       std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> &toVisit,
       std::vector<std::shared_ptr<Edge>>* &localCopyOfAdjacencyList,
       uint32_t nodeIndex,
-      std::shared_ptr<Edge> currentEdge) {
+      std::shared_ptr<Edge> currentEdge)
+{
 
   int32_t idx = findInArray(nodeIndex, vertices, numberOfNodes);
   if (idx == -1) {
@@ -196,32 +198,57 @@ void Graph::searchNeighboursV2(
     return;
   }
 
-  for (uint32_t i = 0; i < localCopyOfAdjacencyList[idx].size(); ++i) {
+  for (uint32_t i = 0; i < localCopyOfAdjacencyList[idx].size(); ++i)
+  {
     std::shared_ptr<Edge> edge = localCopyOfAdjacencyList[idx].at(i);
     // if they are different edges
     if (!((edge->start->id == currentEdge->start->id  && edge->end->id == currentEdge->end->id) ||
-        (edge->start->id == currentEdge->end->id    && edge->end->id == currentEdge->start->id))) {
-      if (edge->weight) {// normal procedure
-        if (edge->pred == nullptr) { // if pred != nullptr it means the edge was seen before, and may be a part of another path
-          updatePred(edge, currentEdge, localCopyOfAdjacencyList);
-        }
-      } else {// if it's 0 it's part of a tree
-        updatePredToLoop(edge, localCopyOfAdjacencyList); //TODO: I think it should be already done
-      }
+        (edge->start->id == currentEdge->end->id    && edge->end->id == currentEdge->start->id)))
+    {
+      if(!edge->end->visited) {
+        if (edge->weight)
+        {// normal procedure
+          if (edge->pred == nullptr)
+          { // if pred != nullptr it means the edge was seen before, and may be a part of another path
+            updatePred(edge, currentEdge, localCopyOfAdjacencyList);
+          }
+          std::shared_ptr<Edge> e = findEdge(edge->start->id, edge->end->id, adjacencyList);
+          if (e == nullptr)
+          {
+            std::cerr << "Error: edge e is nullptr in adjacencyList in searchNeighboursV2" << std::endl;
+            return;
+          }
+          //it is crucial to take original edge weight + current, as if the edge'd have been seen before the weight'd been much greater
+          updateWeight(edge, (e->weight + currentEdge->weight), localCopyOfAdjacencyList);
 
-      if (edge->weight) {// if positive update, else does not change, it's tree  part KEY PART
-        std::shared_ptr<Edge> e = findEdge(edge->start->id, edge->end->id, adjacencyList);
-        if (e == nullptr) {
-          std::cerr << "Error: edge e is nullptr in adjacencyList in searchNeighboursV2" << std::endl;
-          return;
         }
-        //it is crucial to take original edge weight + current, as if the edge'd have been seen before the weight'd been much greater
-        updateWeight(edge, (e->weight + currentEdge->weight), localCopyOfAdjacencyList);
-      }
-      if (edge == nullptr) {
-        std::cerr << "Error: Null edge detected in searchNeighboursv2" << std::endl;
-      } else {
-        toVisit.push(edge);
+        else
+        {// if it's 0 it's part of a tree
+          updatePredToLoop(edge, localCopyOfAdjacencyList); //TODO: I think it should be already done
+        }
+
+
+        // if (edge->weight)
+        // {// if positive update, else does not change, it's tree  part KEY PART
+        //   std::shared_ptr<Edge> e = findEdge(edge->start->id, edge->end->id, adjacencyList);
+        //   if (e == nullptr)
+        //   {
+        //     std::cerr << "Error: edge e is nullptr in adjacencyList in searchNeighboursV2" << std::endl;
+        //     return;
+        //   }
+        //   //it is crucial to take original edge weight + current, as if the edge'd have been seen before the weight'd been much greater
+        //   updateWeight(edge, (e->weight + currentEdge->weight), localCopyOfAdjacencyList);
+        // }
+
+
+        // if (edge == nullptr)
+        // {
+        //   std::cerr << "Error: Null edge detected in searchNeighboursv2" << std::endl;
+        // }
+        // else
+        // {
+          toVisit.push(edge);
+        // }
       }
     }
   }
@@ -252,15 +279,11 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
   // create priority queue
   std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> toVisit;
 
-  // total number of shortest paths to find
-  // const uint32_t numberOfCliqueEdges = numberOfEdgesInClique(terminals.size());
-
   // create structure for all pairs of shortest paths
   std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> allPairsOfShortestPaths(0);
-  // uint32_t allPairsOfShortestPathsCurrentIdx = 0;
 
   for ( uint32_t currentStartingNodeIndex = 0;
-        currentStartingNodeIndex < originalTerminals.size() - 1;
+        currentStartingNodeIndex < originalTerminals.size();
         ++currentStartingNodeIndex) {
 
     // create shortest path structure
@@ -298,10 +321,10 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
         // std::cout << "adding path from " << startingNode << " to " << nextNodeIndex << std::endl;
 
         //TODO can we put that code in while part? (same in Takahashi)
-        std::shared_ptr<Edge> oldPred = e->pred;
         std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
         shortestPath->push_back(edg);
 
+        std::shared_ptr<Edge> oldPred = e->pred;
         // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
         // while (oldPred != nullptr && e->start->id != startingNode) {
         while (oldPred != nullptr && (e->start->id != startingNode && e->end->id != startingNode)) {
@@ -342,10 +365,12 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
 
       // reset localCopyOfAdjacencyList NOTE if this doesn't work, put new localCopyOfAdjacencyList in for
       fullResetCopyOfAdjacencyList(localCopyOfAdjacencyList, self);
+      if (printFlag) {
+        std::cout << "terminals.size " << terminals.size() << std::endl;
+      }
     }
 
   }
-  // std::cout << "numberOfCliqueEdges "<< numberOfCliqueEdges << " vs " << "allPairsOfShortestPaths.size() " << allPairsOfShortestPaths.size() << std::endl;
   return allPairsOfShortestPaths;
 }
 

@@ -128,5 +128,13 @@ std::shared_ptr<Graph> Graph::KouMarkowskyBerman(std::vector<uint32_t> terminals
   }
   resetVisitedStatus();
   std::shared_ptr<Graph> th(new Graph(treeNodes, treeEdges, numberOfSteinerTreeNodes, numberOfSteinerTreeEdges, printFlag));
+  if (printFlag && numberOfNodes < 1000) {
+    std::cout << "KOU" << std::endl;
+    for (uint32_t i = 0; i < th->numberOfNodes; ++i) {
+      for (uint32_t j = 0; j < th->adjacencyList[i].size(); ++j) {
+        std::cout << th->adjacencyList[i].at(j)->start->id << "->" <<   th->adjacencyList[i].at(j)->end->id << "; ";
+      }
+    }
+  }
   return th;
 }

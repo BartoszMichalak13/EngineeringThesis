@@ -48,29 +48,35 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
   vertices[terminals.at(0)]->visited = true;
   terminals.erase(terminals.begin());
 
-  do {
+  do
+  {
     //TODO is this check necessary?
-    if (compareAdajcencyLists(adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
-      std::cerr << "Error: Comparing Adajcency Lists Failed" << std::endl;
-      return dummySharedPointerGraph();
-    }
+    // if (compareAdajcencyLists(adjacencyList, localCopyOfAdjacencyList, numberOfNodes))
+    // {
+    //   std::cerr << "Error: Comparing Adajcency Lists Failed" << std::endl;
+    //   return dummySharedPointerGraph();
+    // }
 
-    if (foundTerminal) {
+    if (foundTerminal)
+    {
       while(!toVisit.empty())
         toVisit.pop();
 
       std::vector<uint32_t> uniqueNodes = tmpPseudoEdgeReturnUniqueNumbers(tmpTreeEdges);//TODO test it
-      for (uint32_t i = 0; i < uniqueNodes.size(); ++i) {
+      for (uint32_t i = 0; i < uniqueNodes.size(); ++i)
+      {
         int32_t idx = findInArray(uniqueNodes.at(i), vertices, numberOfNodes);
         if (idx == -1) {
           std::cerr << "Error: Node " << uniqueNodes.at(i) << " not found in queue reset and repopulation"  << std::endl;
           return dummySharedPointerGraph();
         }
+
         std::shared_ptr<Edge> e = findZeroEdgeInAdjacentTo(idx, localCopyOfAdjacencyList);
         if (e == nullptr) {
           std::cerr << "Error: e doesnt exit aka no neighbour with 0 weight for node "<< uniqueNodes.at(i) << std::endl;
           return dummySharedPointerGraph();
         }
+
         searchNeighboursV2(toVisit, localCopyOfAdjacencyList, uniqueNodes.at(i), e);
         // e = nullptr;
       }
@@ -78,7 +84,8 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
     }
 
     //main loop
-    while(!foundTerminal) { // O(n^2)
+    while(!foundTerminal)
+    { // O(n^2)
       //remoeve all edges that lead to already visited nodes
       if (!toVisit.empty())
         while (toVisit.top() == nullptr || toVisit.top()->end->visited) //TODO is it always the end?
@@ -88,6 +95,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
         std::cerr << "Error: End in loop TakahashiMatsuyama; dummy graph" << std::endl;
         return dummySharedPointerGraph();
       }
+
       std::shared_ptr<Edge> e = toVisit.top();
       toVisit.pop();
       e->end->visited = true;
