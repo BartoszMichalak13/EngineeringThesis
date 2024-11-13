@@ -348,7 +348,16 @@ uint32_t findShortestPathAndReturnWeight(
   for (std::shared_ptr<std::vector<std::shared_ptr<Edge>>>& shortestPath : shortestPathEdgeVec) {
     if (shortestPath->size() < 2) {
       if (shortestPath->size() == 1) {
-        return (*(*shortestPath).at(0)).weight;
+        // std::cout << "Path length(ok) = " << shortestPath->size() << std::endl;
+        // printEdgeVector((*shortestPath));
+        Edge e = (*(*shortestPath).at(0));
+        if ((e.start->id == startId && e.end->id == endId) ||
+            (e.end->id == startId && e.start->id == endId))
+        {
+          return (*(*shortestPath).at(0)).weight;
+        } else {
+          continue;
+        }
       } else {
         std::cerr << "Path length = " << shortestPath->size() << std::endl;
         return std::numeric_limits<uint32_t>::max();

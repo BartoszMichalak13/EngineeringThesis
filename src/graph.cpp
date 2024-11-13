@@ -71,12 +71,25 @@ std::shared_ptr<Graph> Graph::dummySharedPointerGraph() {
   return std::shared_ptr<Graph>(new Graph(0,0,0));
 }
 
+std::shared_ptr<Graph> dummySharedPointerGraph() {
+  return std::shared_ptr<Graph>(new Graph(0,0,0));
+}
+
 /*
 Used only for the first graph, else we may want to change vertices[nodeId] to idx = find(NodeId); vertices[idx]
 */
-void Graph::addEdge(uint32_t node1Id, uint32_t node2Id) {
+void Graph::addEdgeWithRandomWeight(const uint32_t node1Id, const uint32_t node2Id) {
   // We choose them, so that they're smaller than numberOfNodes
   const uint32_t weight = Random::getInstance()->generateRandomNumber(1, maxEdgeWeight);
+  this->adjacencyList[node1Id].push_back(std::shared_ptr<Edge>(new Edge(vertices[node1Id], weight, vertices[node2Id])));
+  this->adjacencyList[node2Id].push_back(std::shared_ptr<Edge>(new Edge(vertices[node2Id], weight, vertices[node1Id])));
+}
+
+/*
+Used only for the first graph, else we may want to change vertices[nodeId] to idx = find(NodeId); vertices[idx]
+*/
+void Graph::addEdge(const uint32_t node1Id, const uint32_t node2Id, const uint32_t weight) {
+  // We choose them, so that they're smaller than numberOfNodes
   this->adjacencyList[node1Id].push_back(std::shared_ptr<Edge>(new Edge(vertices[node1Id], weight, vertices[node2Id])));
   this->adjacencyList[node2Id].push_back(std::shared_ptr<Edge>(new Edge(vertices[node2Id], weight, vertices[node1Id])));
 }

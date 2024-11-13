@@ -47,7 +47,6 @@ struct PseudoEdge
   }
 };
 
-
 class Graph : public std::enable_shared_from_this<Graph> { // TODO doczytaj o  std::enable_shared_from_this
   private:
 
@@ -76,7 +75,11 @@ class Graph : public std::enable_shared_from_this<Graph> { // TODO doczytaj o  s
 
 
 
-    void addEdge(uint32_t node1Id, uint32_t node2Id);
+    // void addEdge(uint32_t node1Id, uint32_t node2Id);
+    void addEdgeWithRandomWeight(const uint32_t node1Id, const uint32_t node2Id);
+    void addEdge(const uint32_t node1Id, const uint32_t node2Id, const uint32_t weight);
+
+
     void printData();
     bool checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id);
     uint32_t graphTotalCost();
@@ -110,6 +113,7 @@ class Graph : public std::enable_shared_from_this<Graph> { // TODO doczytaj o  s
     void printVisitedStatus();
     void resetVisitedStatus();
 };
+std::shared_ptr<Graph> dummySharedPointerGraph();
 
 // void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density, bool printFlag);
 

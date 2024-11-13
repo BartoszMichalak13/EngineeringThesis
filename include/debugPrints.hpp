@@ -1,6 +1,10 @@
 #ifndef DEBUG_PRINTS_HPP
 #define DEBUG_PRINTS_HPP
 #include <iostream>
+#include <vector>
+#include <memory>
+#include "graph.hpp"
+
 
 void tmpPseudoEdgePrint(PseudoEdge p);
 void tmpPseudoEdgePrintVec(std::vector<PseudoEdge> vec);

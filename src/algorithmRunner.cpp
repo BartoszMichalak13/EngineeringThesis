@@ -6,7 +6,7 @@
 #include "algorithmRunner.hpp"
 
 //TODO split into 2 function
-void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density, bool  printFlag)
+std::shared_ptr<Graph> generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool  printFlag)
 {
   std::shared_ptr<Graph> graph(new Graph(numberOfNodes, numberOfEdges, printFlag));
   const uint32_t range = numberOfNodes - 1;
@@ -20,14 +20,19 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
       uint32_t node2Id = Random::getInstance()->generateRandomNumber(0, range);
       cannotMakeEdge = graph->checkIfEdgeExists(node1Id, node2Id);
       if (!cannotMakeEdge && node1Id != node2Id) //no multi edges, no self-loops
-        graph->addEdge(node1Id, node2Id);
+        graph->addEdgeWithRandomWeight(node1Id, node2Id);
     }
   }
   if (printFlag && numberOfNodes < 1000)
   {
     graph->printData();
   }
+  return graph;
+}
 
+void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals)
+{
+  uint32_t numberOfNodes = graph->numberOfNodes;
   std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
   copyAdjacencyListFromGraphWithNewNodeInstances(graph, localCopyOfAdjacencyList);
 
@@ -83,9 +88,12 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
     return;
   }
 
-  uint32_t numberOfTerminals = std::round(numberOfNodes / 4);
-  std::vector<uint32_t> terminals = graph->generateTerminals(numberOfTerminals);
-  if (printFlag)
+  if (!terminals.size()) {
+    uint32_t numberOfTerminals = std::round(numberOfNodes / 4);
+    terminals = graph->generateTerminals(numberOfTerminals);
+  }
+
+  if (graph->printFlag)
     printNodeVector(terminals); // print terminals
 
   auto startTMST = std::chrono::high_resolution_clock::now();
@@ -201,5 +209,5 @@ void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density
 
   delete[] localCopyOfAdjacencyList;
   localCopyOfAdjacencyList = nullptr;
-
+  return;
 }

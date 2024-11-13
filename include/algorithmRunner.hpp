@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <chrono>
 
-void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density, bool  printFlag);
+std::shared_ptr<Graph> generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool  printFlag);
+void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals);
 
 #endif

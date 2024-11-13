@@ -18,6 +18,10 @@
 
 #include <iomanip>
 
+//TODO hipoteza czemu wyniki zle: wyniki są zawyżone przez fakt, że biorąc shortest path miedzy 2 wierzcholkami nie zapisujemy krawedzi,
+// ergo one moga byc liczne 2x
+//
+
 
 
 void printVectorOfSets(std::vector<std::set<uint32_t>>& vecotrOfSets){
@@ -659,6 +663,7 @@ uint32_t Graph::DreyfusWagner(std::vector<uint32_t> terminals) {
           std::cerr << "DW did not found path from " << i << " to " << j << std::endl;
           return std::numeric_limits<uint32_t>::max();
         }
+       std::cout << "Path weight from " << i << " to " << j << " = " << pathWeight << std::endl;
         adjMatrix[i][j] = pathWeight;
         adjMatrix[j][i] = pathWeight;
       }
