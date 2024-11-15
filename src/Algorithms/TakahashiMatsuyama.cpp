@@ -42,8 +42,16 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
   bool foundTerminal = false;
   std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers> toVisit;
 
-  for (uint32_t i = 0; i < localCopyOfAdjacencyList[terminals.at(0)].size(); ++i)
+  //TODO make it safe
+  std::shared_ptr<Edge> selfLoopInitEdge = constructSelfLoopInitEdge(vertices[terminals.at(0)]);
+
+  for (uint32_t i = 0; i < localCopyOfAdjacencyList[terminals.at(0)].size(); ++i) {
+    std::cout << "Edge added to que:" << std::endl;
+    // localCopyOfAdjacencyList[terminals.at(0)].at(i)->
+    updatePred(localCopyOfAdjacencyList[terminals.at(0)].at(i), selfLoopInitEdge, localCopyOfAdjacencyList);
+    printEdge(localCopyOfAdjacencyList[terminals.at(0)].at(i));
     toVisit.push(localCopyOfAdjacencyList[terminals.at(0)].at(i));
+  }
 
   vertices[terminals.at(0)]->visited = true;
   terminals.erase(terminals.begin());

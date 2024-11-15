@@ -208,6 +208,17 @@ void Graph::searchNeighboursV2(
       if(!edge->end->visited) {
         if (edge->weight)
         {// normal procedure
+          // if we reached this node in shorter way already then there is no need to change it
+          std::cout << std::endl;
+          std::cout << "edge->weight " << edge->weight << " currentEdge->weight " << currentEdge->weight << std::endl;
+          std::cout << std::endl;
+
+          //TODO think about it
+          // if (edge->pred == nullptr && edge->weight >= currentEdge->weight)
+          // { // if pred != nullptr it means the edge was seen before, and may be a part of another path
+          //   updatePred(edge, currentEdge, localCopyOfAdjacencyList);
+          // }
+
           if (edge->pred == nullptr)
           { // if pred != nullptr it means the edge was seen before, and may be a part of another path
             updatePred(edge, currentEdge, localCopyOfAdjacencyList);
@@ -247,6 +258,9 @@ void Graph::searchNeighboursV2(
         // }
         // else
         // {
+
+          std::cout << "Edge added to que:" << std::endl;
+          printEdge(edge);
           toVisit.push(edge);
         // }
       }
