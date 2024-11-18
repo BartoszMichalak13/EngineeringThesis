@@ -5,7 +5,6 @@
 #include "debugPrints.hpp"
 #include "algorithmRunner.hpp"
 
-//TODO split into 2 function
 std::shared_ptr<Graph> generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool  printFlag)
 {
   std::shared_ptr<Graph> graph(new Graph(numberOfNodes, numberOfEdges, printFlag));
@@ -30,19 +29,10 @@ std::shared_ptr<Graph> generateGraph(uint32_t numberOfNodes, uint32_t numberOfEd
   return graph;
 }
 
-void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals)
+void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals, uint32_t algorithmsToRun, const std::string& fileName)
 {
   uint32_t numberOfNodes = graph->numberOfNodes;
-  std::vector<std::shared_ptr<Edge>>* localCopyOfAdjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
-  copyAdjacencyListFromGraphWithNewNodeInstances(graph, localCopyOfAdjacencyList);
 
-  if (compareAdajcencyLists(graph->adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
-    std::cout << "Comparing Adajcency Lists Failed" << std::endl;
-    graph->printAdajcencyListFromGraph();
-    std::cout << "Local" << std::endl;
-    printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
-    return;
-  }
   std::pair<bool,bool> graphCheck = graph->isTree();
   if (graphCheck.first) {
     std::cout << "Base Graph is acyclic" << std::endl;
@@ -53,8 +43,6 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     std::cout << "Base Graph is connected" << std::endl;
   } else {
     std::cout << "Graph is NOT connected" << std::endl;
-    delete[] localCopyOfAdjacencyList;
-    localCopyOfAdjacencyList = nullptr;
     return;
   }
 
@@ -77,14 +65,10 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
       std::cout << "mst is a Tree" << std::endl;
     } else {
       std::cout << "mst is NOT connected" << std::endl;
-      delete[] localCopyOfAdjacencyList;
-      localCopyOfAdjacencyList = nullptr;
       return;
     }
   } else {
     std::cout << "mst is NOT acyclic" << std::endl;
-    delete[] localCopyOfAdjacencyList;
-    localCopyOfAdjacencyList = nullptr;
     return;
   }
 
@@ -96,120 +80,135 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
   if (graph->printFlag)
     printNodeVector(terminals); // print terminals
 
-  auto startTMST = std::chrono::high_resolution_clock::now();
+  uint32_t TMSTcost = 0;
+  std::chrono::microseconds durationTMST = std::chrono::microseconds(0);
+  if (isNthBitSet(algorithmsToRun, 0)) {
+    auto startTMST = std::chrono::high_resolution_clock::now();
 
-  std::shared_ptr<Graph> steinerTreeTakahashiMatsuyama = graph->TakahashiMatsuyama(terminals);
+    std::shared_ptr<Graph> steinerTreeTakahashiMatsuyama = graph->TakahashiMatsuyama(terminals);
 
-  auto stopTMST = std::chrono::high_resolution_clock::now();
-  auto durationTMST = std::chrono::duration_cast<std::chrono::microseconds>(stopTMST - startTMST);
+    auto stopTMST = std::chrono::high_resolution_clock::now();
+    durationTMST = std::chrono::duration_cast<std::chrono::microseconds>(stopTMST - startTMST);
+    TMSTcost = steinerTreeTakahashiMatsuyama->graphTotalCost();
+    graph->resetVisitedStatus();
 
-  graph->resetVisitedStatus();
-
-  std::pair<bool,bool> steinerTreeTakahashiMatsuyamaCheck = steinerTreeTakahashiMatsuyama->isTree();
-  if (steinerTreeTakahashiMatsuyamaCheck.first) {
-    std::cout << "steinerTreeTakahashiMatsuyama is acyclic" << std::endl;
-    if (steinerTreeTakahashiMatsuyamaCheck.second) {
-      std::cout << "steinerTreeTakahashiMatsuyama is connected" << std::endl;
-      std::cout << "steinerTreeTakahashiMatsuyama is a Tree" << std::endl;
+    std::pair<bool,bool> steinerTreeTakahashiMatsuyamaCheck = steinerTreeTakahashiMatsuyama->isTree();
+    if (steinerTreeTakahashiMatsuyamaCheck.first) {
+      std::cout << "steinerTreeTakahashiMatsuyama is acyclic" << std::endl;
+      if (steinerTreeTakahashiMatsuyamaCheck.second) {
+        std::cout << "steinerTreeTakahashiMatsuyama is connected" << std::endl;
+        std::cout << "steinerTreeTakahashiMatsuyama is a Tree" << std::endl;
+      } else {
+        std::cout << "steinerTreeTakahashiMatsuyama is NOT connected" << std::endl;
+        return;
+      }
     } else {
-      std::cout << "steinerTreeTakahashiMatsuyama is NOT connected" << std::endl;
-      delete[] localCopyOfAdjacencyList;
-      localCopyOfAdjacencyList = nullptr;
+      std::cout << "steinerTreeTakahashiMatsuyama is NOT acyclic" << std::endl;
       return;
     }
-  } else {
-    std::cout << "steinerTreeTakahashiMatsuyama is NOT acyclic" << std::endl;
-    delete[] localCopyOfAdjacencyList;
-    localCopyOfAdjacencyList = nullptr;
-    return;
   }
 
-  if (compareAdajcencyLists(graph->adjacencyList, localCopyOfAdjacencyList, numberOfNodes)) {
-    std::cout << "Comparing Adajcency Lists Failed" << std::endl;
-    graph->printAdajcencyListFromGraph();
-    std::cout << "Local" << std::endl;
-    printAdajcencyList(localCopyOfAdjacencyList, numberOfNodes);
-    delete[] localCopyOfAdjacencyList;
-    localCopyOfAdjacencyList = nullptr;
-    return;
-  }
+  uint32_t KMBSTcost = 0;
+  std::chrono::microseconds durationKMBST = std::chrono::microseconds(0);
+  if (isNthBitSet(algorithmsToRun, 1)) {
+    auto startKMBST = std::chrono::high_resolution_clock::now();
 
-  auto startKMBST = std::chrono::high_resolution_clock::now();
+    std::shared_ptr<Graph> steinerTreeKouMarkowskyBerman(graph->KouMarkowskyBerman(terminals));
 
-  std::shared_ptr<Graph> steinerTreeKouMarkowskyBerman(graph->KouMarkowskyBerman(terminals));
+    auto stopKMBST = std::chrono::high_resolution_clock::now();
+    durationKMBST = std::chrono::duration_cast<std::chrono::microseconds>(stopKMBST - startKMBST);
+    KMBSTcost = steinerTreeKouMarkowskyBerman->graphTotalCost();
+    graph->resetVisitedStatus();
 
-  auto stopKMBST = std::chrono::high_resolution_clock::now();
-  auto durationKMBST = std::chrono::duration_cast<std::chrono::microseconds>(stopKMBST - startKMBST);
-  graph->resetVisitedStatus();
-
-  std::cout << std::endl;
-  std::pair<bool,bool> steinerTreeKouMarkowskyBermanCheck = steinerTreeKouMarkowskyBerman->isTree();
-  if (steinerTreeKouMarkowskyBermanCheck.first) {
-    std::cout << "steinerTreeKouMarkowskyBerman is acyclic" << std::endl;
-    if (steinerTreeKouMarkowskyBermanCheck.second) {
-      std::cout << "steinerTreeKouMarkowskyBerman is connected" << std::endl;
-      std::cout << "steinerTreeKouMarkowskyBerman is a Tree" << std::endl;
+    std::cout << std::endl;
+    std::pair<bool,bool> steinerTreeKouMarkowskyBermanCheck = steinerTreeKouMarkowskyBerman->isTree();
+    if (steinerTreeKouMarkowskyBermanCheck.first) {
+      std::cout << "steinerTreeKouMarkowskyBerman is acyclic" << std::endl;
+      if (steinerTreeKouMarkowskyBermanCheck.second) {
+        std::cout << "steinerTreeKouMarkowskyBerman is connected" << std::endl;
+        std::cout << "steinerTreeKouMarkowskyBerman is a Tree" << std::endl;
+      } else {
+        std::cout << "steinerTreeKouMarkowskyBerman is NOT connected" << std::endl;
+        return;
+      }
     } else {
-      std::cout << "steinerTreeKouMarkowskyBerman is NOT connected" << std::endl;
-      delete[] localCopyOfAdjacencyList;
-      localCopyOfAdjacencyList = nullptr;
+      std::cout << "steinerTreeKouMarkowskyBerman is NOT acyclic" << std::endl;
       return;
     }
-  } else {
-    std::cout << "steinerTreeKouMarkowskyBerman is NOT acyclic" << std::endl;
-    delete[] localCopyOfAdjacencyList;
-    localCopyOfAdjacencyList = nullptr;
-    return;
   }
 
-  // std::cout << std::endl;
-  // std::cout << std::endl;
-  // std::cout << "COSTS:" << std::endl;
-  // std::cout << "starting graph: " << graph->graphTotalCost() << std::endl;
-  // std::cout << "MST: " << mst->graphTotalCost() << std::endl;
-  // std::cout << "TakahashiMatsuyama steinerTree: " << steinerTreeTakahashiMatsuyama->graphTotalCost() << std::endl;
-  // std::cout << "KouMarkowskyBerman steinerTree: " << steinerTreeKouMarkowskyBerman->graphTotalCost() << std::endl;
-  // std::cout << std::endl;
-  // std::cout << std::endl;
-  // std::cout << "Time:" << std::endl;
-  // std::cout << "MST: " << durationMST.count() << " microseconds" << std::endl;
-  // std::cout << "TakahashiMatsuyama steinerTree: " << durationTMST.count() << " microseconds" << std::endl;
-  // std::cout << "KouMarkowskyBerman steinerTree: " << durationKMBST.count() << " microseconds" << std::endl;
-  // std::cout << std::endl;
-  // std::cout << std::endl;
+  uint32_t DWSTcost = 0;
+  std::chrono::microseconds durationDreyfus = std::chrono::microseconds(0);
+  if (isNthBitSet(algorithmsToRun, 2)) {
+    auto startDreyfus = std::chrono::high_resolution_clock::now();
 
+    DWSTcost = graph->DreyfusWagner(terminals);
 
-
-
-
-  uint32_t opt = graph->DreyfusWagner(terminals);
-
-  graph->printAdajcencyListFromGraph();
+    auto stopDreyfus = std::chrono::high_resolution_clock::now();
+    durationDreyfus = std::chrono::duration_cast<std::chrono::microseconds>(stopDreyfus - startDreyfus);
+  }
+  // graph->printAdajcencyListFromGraph();
 
   std::cout << std::endl;
   std::cout << std::endl;
   std::cout << "COSTS:" << std::endl;
   std::cout << "starting graph: " << graph->graphTotalCost() << std::endl;
   std::cout << "MST: " << mst->graphTotalCost() << std::endl;
-  std::cout << "TakahashiMatsuyama steinerTree: " << steinerTreeTakahashiMatsuyama->graphTotalCost() << std::endl;
-  std::cout << "KouMarkowskyBerman steinerTree: " << steinerTreeKouMarkowskyBerman->graphTotalCost() << std::endl;
-  std::cout << "DreyfusWagner(OPT) steinerTree: " << opt << std::endl;
+
+  if (isNthBitSet(algorithmsToRun, 0))
+    std::cout << "TakahashiMatsuyama steinerTree: " << TMSTcost << std::endl;
+
+  if (isNthBitSet(algorithmsToRun, 1))
+    std::cout << "KouMarkowskyBerman steinerTree: " << KMBSTcost << std::endl;
+
+  if (isNthBitSet(algorithmsToRun, 2))
+    std::cout << "DreyfusWagner(OPT) steinerTree: " << DWSTcost << std::endl;
+
   std::cout << std::endl;
   std::cout << std::endl;
-  // std::cout << "Time:" << std::endl;
-  // std::cout << "MST: " << durationMST.count() << " microseconds" << std::endl;
-  // std::cout << "TakahashiMatsuyama steinerTree: " << durationTMST.count() << " microseconds" << std::endl;
-  // std::cout << "KouMarkowskyBerman steinerTree: " << durationKMBST.count() << " microseconds" << std::endl;
-  // std::cout << std::endl;
-  // std::cout << std::endl;
+  std::cout << "Time:" << std::endl;
+  std::cout << "MST: " << durationMST.count() << " microseconds" << std::endl;
+
+  if (isNthBitSet(algorithmsToRun, 0))
+    std::cout << "TakahashiMatsuyama steinerTree: " << durationTMST.count() << " microseconds" << std::endl;
+
+  if (isNthBitSet(algorithmsToRun, 1))
+    std::cout << "KouMarkowskyBerman steinerTree: " << durationKMBST.count() << " microseconds" << std::endl;
+
+  if (isNthBitSet(algorithmsToRun, 2))
+    std::cout << "DreyfusWagner(OPT) steinerTree: " << durationDreyfus.count() << " microseconds" << std::endl;
+
+  std::cout << std::endl;
+  std::cout << std::endl;
 
 
 
   // graph->printAdajcencyListFromGraph();
+  if (graph->printFlag)
+    printNodeVector(terminals);
 
-  printNodeVector(terminals);
-
-  delete[] localCopyOfAdjacencyList;
-  localCopyOfAdjacencyList = nullptr;
+  writeOutput(
+    fileName,
+    terminals.size(),
+    graph->numberOfNodes,
+    graph->numberOfEdges,
+    DWSTcost,
+    durationDreyfus.count(),
+    TMSTcost,
+    durationTMST.count(),
+    KMBSTcost,
+    durationKMBST.count()
+  );
+// void writeOutput(
+    // const std::string& fileName,
+    // uint32_t numberOfTerminals,
+    // uint32_t numberOfNodes,
+    // uint32_t numberOfEdges,
+    // uint32_t DreyfusWagnerCost,
+    // uint32_t DreyfusWagnerTime,
+    // uint32_t TakahashiMatsuyamaCost,
+    // uint32_t TakahashiMatsuyamaTime,
+    // uint32_t KouMarkowskyBermanCost,
+    // uint32_t KouMarkowskyBermanTime)
   return;
 }

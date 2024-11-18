@@ -115,6 +115,9 @@ class Graph : public std::enable_shared_from_this<Graph> { // TODO doczytaj o  s
 };
 std::shared_ptr<Graph> dummySharedPointerGraph();
 
+//TODO DO SOMEHTING AOBUT IT
+std::vector<uint32_t> generateTerminals(uint32_t numberOfNodes, uint32_t numberOfTerminals);
+
 // void generateGraph(uint32_t numberOfNodes, uint32_t numberOfEdges, float density, bool printFlag);
 
 #endif

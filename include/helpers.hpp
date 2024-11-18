@@ -42,4 +42,7 @@ uint32_t findShortestPathAndReturnWeight(
     std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> shortestPathEdgeVec,
     uint32_t startId,
     uint32_t endId);
+
+bool isNthBitSet(uint32_t num, uint32_t n);
+
 #endif

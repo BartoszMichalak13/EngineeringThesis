@@ -7,14 +7,12 @@
 #include <functional>
 #include <stdint.h>
 
-//TODO QoL graph constructor?
 //TODO check ranges (e.g. function returning int32 instead of uint32)
 //TODO split into files, maybe for debug functions, helpers etc
 //TODO inline everything
 //TODO powrzucaj consty
 //TODO wszystkie uzycie adj powinny byc bezpieczne (tj bfs na steiner tree nie ma w adj[5] wierzcolka 5 itd)
 //TODO nazwy, ładne, czytelne, przenoszą sens
-//TODO potencjalnie mozna sprawdzac czy acykliczny
 
 //coś z resetem pewnie, użyj emplace moze na priorty que (deprecated?)
 
@@ -125,6 +123,22 @@ std::vector<uint32_t> Graph::generateTerminals(uint32_t numberOfTerminals) {
   return terminals;
 }
 
+/*
+Generates vector of idx's of terminals.
+*/
+std::vector<uint32_t> generateTerminals(uint32_t numberOfNodes, uint32_t numberOfTerminals) {
+  std::vector<uint32_t> terminals;
+  uint32_t term = Random::getInstance()->generateRandomNumber(0, numberOfNodes - 1);
+  terminals.push_back(term);
+  for (uint32_t i = 1; i < numberOfTerminals; ++i) {
+    while (findInUintVector(term, terminals) > -1) {
+      term = Random::getInstance()->generateRandomNumber(0, numberOfNodes - 1);
+    }
+    terminals.push_back(term);
+  }
+  return terminals;
+}
+
 // void Graph::bfs() {
 //   std::queue<std::shared_ptr<Node>> toVisit;
 //   std::shared_ptr<Node> currentNode(vertices[0]);
@@ -208,17 +222,8 @@ void Graph::searchNeighboursV2(
       if(!edge->end->visited) {
         if (edge->weight)
         {// normal procedure
-          // if we reached this node in shorter way already then there is no need to change it
-          std::cout << std::endl;
-          std::cout << "edge->weight " << edge->weight << " currentEdge->weight " << currentEdge->weight << std::endl;
-          std::cout << std::endl;
 
           //TODO think about it
-          // if (edge->pred == nullptr && edge->weight >= currentEdge->weight)
-          // { // if pred != nullptr it means the edge was seen before, and may be a part of another path
-          //   updatePred(edge, currentEdge, localCopyOfAdjacencyList);
-          // }
-
           if (edge->pred == nullptr)
           { // if pred != nullptr it means the edge was seen before, and may be a part of another path
             updatePred(edge, currentEdge, localCopyOfAdjacencyList);
@@ -237,32 +242,7 @@ void Graph::searchNeighboursV2(
         {// if it's 0 it's part of a tree
           updatePredToLoop(edge, localCopyOfAdjacencyList); //TODO: I think it should be already done
         }
-
-
-        // if (edge->weight)
-        // {// if positive update, else does not change, it's tree  part KEY PART
-        //   std::shared_ptr<Edge> e = findEdge(edge->start->id, edge->end->id, adjacencyList);
-        //   if (e == nullptr)
-        //   {
-        //     std::cerr << "Error: edge e is nullptr in adjacencyList in searchNeighboursV2" << std::endl;
-        //     return;
-        //   }
-        //   //it is crucial to take original edge weight + current, as if the edge'd have been seen before the weight'd been much greater
-        //   updateWeight(edge, (e->weight + currentEdge->weight), localCopyOfAdjacencyList);
-        // }
-
-
-        // if (edge == nullptr)
-        // {
-        //   std::cerr << "Error: Null edge detected in searchNeighboursv2" << std::endl;
-        // }
-        // else
-        // {
-
-          std::cout << "Edge added to que:" << std::endl;
-          printEdge(edge);
-          toVisit.push(edge);
-        // }
+        toVisit.push(edge);
       }
     }
   }

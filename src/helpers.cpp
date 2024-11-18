@@ -318,8 +318,6 @@ void embedEdgeIntoTree(
     std::vector<std::shared_ptr<Edge>>* &localCopyOfAdjacencyList,
     std::vector<std::shared_ptr<Edge>>* &adjacencyList,
     std::vector<PseudoEdge> &tmpTreeEdges) {
-  std::cout << "adding edg ";
-  printEdge(e);
   updateWeight(e, 0, localCopyOfAdjacencyList);
   updatePredToLoop(e, localCopyOfAdjacencyList);
   std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
@@ -403,4 +401,8 @@ uint32_t findShortestPathAndReturnWeight(
   }
   std::cerr << "Path from " << startId << " to " << endId << "not found" << std::endl;
   return std::numeric_limits<uint32_t>::max();
+}
+
+bool isNthBitSet(uint32_t num, uint32_t n) {
+    return (num & (1 << n)) != 0;
 }

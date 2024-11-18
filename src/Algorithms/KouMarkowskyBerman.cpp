@@ -5,6 +5,9 @@
 #include "debugPrints.hpp"
 #include <algorithm>
 
+//TODO ASDFASDFASFASFASFA
+// 7->10; 7->11; 10->7; 10->11; 11->7; 11->5; 11->10; 11->1; 11->3; 5->11; 1->11; 3->11; 3->12; 12->3;
+// steinerTreeKouMarkowskyBerman is NOT acyclic
 //TODO na spokojnie sprawdz czy all pointery dzialaja tj, czy sa dobrze przepisywane
 /*
 1. Construct complete graph G_1 where V = terminals (Steiner Points), E = shortest paths between terminals

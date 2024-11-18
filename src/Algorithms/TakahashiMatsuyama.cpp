@@ -46,10 +46,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
   std::shared_ptr<Edge> selfLoopInitEdge = constructSelfLoopInitEdge(vertices[terminals.at(0)]);
 
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[terminals.at(0)].size(); ++i) {
-    std::cout << "Edge added to que:" << std::endl;
-    // localCopyOfAdjacencyList[terminals.at(0)].at(i)->
     updatePred(localCopyOfAdjacencyList[terminals.at(0)].at(i), selfLoopInitEdge, localCopyOfAdjacencyList);
-    printEdge(localCopyOfAdjacencyList[terminals.at(0)].at(i));
     toVisit.push(localCopyOfAdjacencyList[terminals.at(0)].at(i));
   }
 
@@ -58,13 +55,6 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
 
   do
   {
-    //TODO is this check necessary?
-    // if (compareAdajcencyLists(adjacencyList, localCopyOfAdjacencyList, numberOfNodes))
-    // {
-    //   std::cerr << "Error: Comparing Adajcency Lists Failed" << std::endl;
-    //   return dummySharedPointerGraph();
-    // }
-
     if (foundTerminal)
     {
       while(!toVisit.empty())
@@ -86,7 +76,6 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(std::vector<uint32_t> terminals
         }
 
         searchNeighboursV2(toVisit, localCopyOfAdjacencyList, uniqueNodes.at(i), e);
-        // e = nullptr;
       }
       foundTerminal = false;
     }
