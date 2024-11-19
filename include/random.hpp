@@ -27,6 +27,11 @@ class Random {
      * object stored in the static field.
      */
     static Random *getInstance();
+    /**
+     * Cleans up the singleton instance.
+     */
+    static void destroyInstance();
+
     uint32_t generateRandomNumber(uint32_t min, uint32_t max);
 };
 

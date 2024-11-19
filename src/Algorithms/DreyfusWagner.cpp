@@ -488,6 +488,11 @@ uint32_t Graph::DreyfusWagner(std::vector<uint32_t> terminals) {
     adjMatrix2,
     allSubsets,
     q);
+  // tmpShortestPaths.clear();
+  // std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>>().swap(tmpShortestPaths);
+
+  subsetMap.clear();
+
 
  return steinerWeight;
 }

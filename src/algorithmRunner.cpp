@@ -72,10 +72,13 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     return;
   }
 
+  std::cout << "H1" << std::endl;
+
   if (!terminals.size()) {
     uint32_t numberOfTerminals = std::round(numberOfNodes / 4);
     terminals = graph->generateTerminals(numberOfTerminals);
   }
+  std::cout << "H2" << std::endl;
 
   if (graph->printFlag)
     printNodeVector(terminals); // print terminals
@@ -83,14 +86,18 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
   uint32_t TMSTcost = 0;
   std::chrono::microseconds durationTMST = std::chrono::microseconds(0);
   if (isNthBitSet(algorithmsToRun, 0)) {
+    std::cout << "H3" << std::endl;
+
     auto startTMST = std::chrono::high_resolution_clock::now();
 
     std::shared_ptr<Graph> steinerTreeTakahashiMatsuyama = graph->TakahashiMatsuyama(terminals);
+    std::cout << "H4" << std::endl;
 
     auto stopTMST = std::chrono::high_resolution_clock::now();
     durationTMST = std::chrono::duration_cast<std::chrono::microseconds>(stopTMST - startTMST);
     TMSTcost = steinerTreeTakahashiMatsuyama->graphTotalCost();
     graph->resetVisitedStatus();
+    std::cout << "H5" << std::endl;
 
     std::pair<bool,bool> steinerTreeTakahashiMatsuyamaCheck = steinerTreeTakahashiMatsuyama->isTree();
     if (steinerTreeTakahashiMatsuyamaCheck.first) {
@@ -199,16 +206,7 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     KMBSTcost,
     durationKMBST.count()
   );
-// void writeOutput(
-    // const std::string& fileName,
-    // uint32_t numberOfTerminals,
-    // uint32_t numberOfNodes,
-    // uint32_t numberOfEdges,
-    // uint32_t DreyfusWagnerCost,
-    // uint32_t DreyfusWagnerTime,
-    // uint32_t TakahashiMatsuyamaCost,
-    // uint32_t TakahashiMatsuyamaTime,
-    // uint32_t KouMarkowskyBermanCost,
-    // uint32_t KouMarkowskyBermanTime)
+  std::cout << "Hend" << std::endl;
+
   return;
 }

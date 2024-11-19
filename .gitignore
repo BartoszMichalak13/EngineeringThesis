@@ -39,3 +39,6 @@
 
 #Results
 /results/
+
+# jupyter notebook checkpoints
+/.ipynb_checkpoints/

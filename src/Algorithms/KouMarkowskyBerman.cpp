@@ -139,5 +139,10 @@ std::shared_ptr<Graph> Graph::KouMarkowskyBerman(std::vector<uint32_t> terminals
       }
     }
   }
+  delete[] localCopyOfAdjacencyList;
+  localCopyOfAdjacencyList = nullptr;
+  // tmpShortestPaths.clear();
+  // std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>>().swap(tmpShortestPaths);
+
   return th;
 }

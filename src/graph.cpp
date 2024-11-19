@@ -365,6 +365,8 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
     }
 
   }
+  delete[] localCopyOfAdjacencyList;
+  localCopyOfAdjacencyList = nullptr;
   return allPairsOfShortestPaths;
 }
 
