@@ -13,7 +13,7 @@ std::shared_ptr<Graph> generateGraph(uint32_t numberOfNodes, uint32_t numberOfEd
   for (uint32_t i = 0; i < numberOfEdges; ++i)
   {
     bool cannotMakeEdge = true;
-    while(cannotMakeEdge) 
+    while(cannotMakeEdge)
     {
       uint32_t node1Id = Random::getInstance()->generateRandomNumber(0, range);
       uint32_t node2Id = Random::getInstance()->generateRandomNumber(0, range);
@@ -32,20 +32,23 @@ std::shared_ptr<Graph> generateGraph(uint32_t numberOfNodes, uint32_t numberOfEd
 void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals, uint32_t algorithmsToRun, const std::string& fileName)
 {
   uint32_t numberOfNodes = graph->numberOfNodes;
+  bool pF = graph->printFlag;
 
   std::pair<bool,bool> graphCheck = graph->isTree();
   if (graphCheck.first) {
-    std::cout << "Base Graph is acyclic" << std::endl;
+    if (pF) std::cout << "Base Graph is acyclic" << std::endl;
   } else {
-    std::cout << "Base Graph is NOT acyclic" << std::endl;
+    if (pF) std::cout << "Base Graph is NOT acyclic" << std::endl;
   }
   if (graphCheck.second) {
-    std::cout << "Base Graph is connected" << std::endl;
+    if (pF) std::cout << "Base Graph is connected" << std::endl;
   } else {
     std::cout << "Graph is NOT connected" << std::endl;
     return;
   }
-
+  /*******************************************************************/
+  /*                             MST                                 */
+  /*******************************************************************/
   auto startMST = std::chrono::high_resolution_clock::now();
 
   std::shared_ptr<Graph> mst = graph->PrimMST(); //dummy for now
@@ -59,10 +62,10 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
   std::cout << std::endl;
   std::pair<bool,bool> mstCheck = mst->isTree();
   if (mstCheck.first) {
-    std::cout << "mst is acyclic" << std::endl;
+    if (pF) std::cout << "mst is acyclic" << std::endl;
     if (mstCheck.second) {
-      std::cout << "mst is connected" << std::endl;
-      std::cout << "mst is a Tree" << std::endl;
+      if (pF) std::cout << "mst is connected" << std::endl;
+      if (pF) std::cout << "mst is a Tree" << std::endl;
     } else {
       std::cout << "mst is NOT connected" << std::endl;
       return;
@@ -72,39 +75,46 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     return;
   }
 
-  std::cout << "H1" << std::endl;
-
+  /*            GENERATE TERMINALS IF NOT GIVEN (MODE 1)             */
   if (!terminals.size()) {
     uint32_t numberOfTerminals = std::round(numberOfNodes / 4);
     terminals = graph->generateTerminals(numberOfTerminals);
   }
-  std::cout << "H2" << std::endl;
 
-  if (graph->printFlag)
-    printNodeVector(terminals); // print terminals
+  if (pF)
+    printUintVector(terminals); // print terminals
 
+
+  /*******************************************************************/
+  /*                      Takahashi Matsuyama                        */
+  /*******************************************************************/
   uint32_t TMSTcost = 0;
   std::chrono::microseconds durationTMST = std::chrono::microseconds(0);
+  /*
+    duration of not necessary
+    duration of init
+    duration of preparation for next iteration
+    duration of main loop
+  */
+  std::vector<std::chrono::microseconds> TMtimes = std::vector<std::chrono::microseconds>();
+
   if (isNthBitSet(algorithmsToRun, 0)) {
-    std::cout << "H3" << std::endl;
 
     auto startTMST = std::chrono::high_resolution_clock::now();
 
-    std::shared_ptr<Graph> steinerTreeTakahashiMatsuyama = graph->TakahashiMatsuyama(terminals);
-    std::cout << "H4" << std::endl;
+    std::shared_ptr<Graph> steinerTreeTakahashiMatsuyama = graph->TakahashiMatsuyama(terminals, TMtimes);
 
     auto stopTMST = std::chrono::high_resolution_clock::now();
     durationTMST = std::chrono::duration_cast<std::chrono::microseconds>(stopTMST - startTMST);
     TMSTcost = steinerTreeTakahashiMatsuyama->graphTotalCost();
     graph->resetVisitedStatus();
-    std::cout << "H5" << std::endl;
 
     std::pair<bool,bool> steinerTreeTakahashiMatsuyamaCheck = steinerTreeTakahashiMatsuyama->isTree();
     if (steinerTreeTakahashiMatsuyamaCheck.first) {
-      std::cout << "steinerTreeTakahashiMatsuyama is acyclic" << std::endl;
+      if(pF) std::cout << "steinerTreeTakahashiMatsuyama is acyclic" << std::endl;
       if (steinerTreeTakahashiMatsuyamaCheck.second) {
-        std::cout << "steinerTreeTakahashiMatsuyama is connected" << std::endl;
-        std::cout << "steinerTreeTakahashiMatsuyama is a Tree" << std::endl;
+        if(pF) std::cout << "steinerTreeTakahashiMatsuyama is connected" << std::endl;
+        if(pF) std::cout << "steinerTreeTakahashiMatsuyama is a Tree" << std::endl;
       } else {
         std::cout << "steinerTreeTakahashiMatsuyama is NOT connected" << std::endl;
         return;
@@ -115,12 +125,24 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     }
   }
 
+  /*******************************************************************/
+  /*                     KOU MARKOWSKI BERMAN                        */
+  /*******************************************************************/
   uint32_t KMBSTcost = 0;
   std::chrono::microseconds durationKMBST = std::chrono::microseconds(0);
+  /*
+    duration of not necessary
+    duration of step1
+    duration of step2
+    duration of step3
+    duration of step4
+    duration of step5
+  */
+  std::vector<std::chrono::microseconds> KMBtimes = std::vector<std::chrono::microseconds>();
   if (isNthBitSet(algorithmsToRun, 1)) {
     auto startKMBST = std::chrono::high_resolution_clock::now();
 
-    std::shared_ptr<Graph> steinerTreeKouMarkowskyBerman(graph->KouMarkowskyBerman(terminals));
+    std::shared_ptr<Graph> steinerTreeKouMarkowskyBerman(graph->KouMarkowskyBerman(terminals, KMBtimes));
 
     auto stopKMBST = std::chrono::high_resolution_clock::now();
     durationKMBST = std::chrono::duration_cast<std::chrono::microseconds>(stopKMBST - startKMBST);
@@ -130,10 +152,10 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     std::cout << std::endl;
     std::pair<bool,bool> steinerTreeKouMarkowskyBermanCheck = steinerTreeKouMarkowskyBerman->isTree();
     if (steinerTreeKouMarkowskyBermanCheck.first) {
-      std::cout << "steinerTreeKouMarkowskyBerman is acyclic" << std::endl;
+      if(pF) std::cout << "steinerTreeKouMarkowskyBerman is acyclic" << std::endl;
       if (steinerTreeKouMarkowskyBermanCheck.second) {
-        std::cout << "steinerTreeKouMarkowskyBerman is connected" << std::endl;
-        std::cout << "steinerTreeKouMarkowskyBerman is a Tree" << std::endl;
+        if(pF) std::cout << "steinerTreeKouMarkowskyBerman is connected" << std::endl;
+        if(pF) std::cout << "steinerTreeKouMarkowskyBerman is a Tree" << std::endl;
       } else {
         std::cout << "steinerTreeKouMarkowskyBerman is NOT connected" << std::endl;
         return;
@@ -144,6 +166,9 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     }
   }
 
+  /*******************************************************************/
+  /*                         DREYFUS WAGNER                          */
+  /*******************************************************************/
   uint32_t DWSTcost = 0;
   std::chrono::microseconds durationDreyfus = std::chrono::microseconds(0);
   if (isNthBitSet(algorithmsToRun, 2)) {
@@ -154,59 +179,61 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     auto stopDreyfus = std::chrono::high_resolution_clock::now();
     durationDreyfus = std::chrono::duration_cast<std::chrono::microseconds>(stopDreyfus - startDreyfus);
   }
-  // graph->printAdajcencyListFromGraph();
-
-  std::cout << std::endl;
-  std::cout << std::endl;
-  std::cout << "COSTS:" << std::endl;
-  std::cout << "starting graph: " << graph->graphTotalCost() << std::endl;
-  std::cout << "MST: " << mst->graphTotalCost() << std::endl;
-
-  if (isNthBitSet(algorithmsToRun, 0))
-    std::cout << "TakahashiMatsuyama steinerTree: " << TMSTcost << std::endl;
-
-  if (isNthBitSet(algorithmsToRun, 1))
-    std::cout << "KouMarkowskyBerman steinerTree: " << KMBSTcost << std::endl;
-
-  if (isNthBitSet(algorithmsToRun, 2))
-    std::cout << "DreyfusWagner(OPT) steinerTree: " << DWSTcost << std::endl;
-
-  std::cout << std::endl;
-  std::cout << std::endl;
-  std::cout << "Time:" << std::endl;
-  std::cout << "MST: " << durationMST.count() << " microseconds" << std::endl;
-
-  if (isNthBitSet(algorithmsToRun, 0))
-    std::cout << "TakahashiMatsuyama steinerTree: " << durationTMST.count() << " microseconds" << std::endl;
-
-  if (isNthBitSet(algorithmsToRun, 1))
-    std::cout << "KouMarkowskyBerman steinerTree: " << durationKMBST.count() << " microseconds" << std::endl;
-
-  if (isNthBitSet(algorithmsToRun, 2))
-    std::cout << "DreyfusWagner(OPT) steinerTree: " << durationDreyfus.count() << " microseconds" << std::endl;
-
-  std::cout << std::endl;
-  std::cout << std::endl;
 
 
+  if(pF) {
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "COSTS:" << std::endl;
+    std::cout << "starting graph: " << graph->graphTotalCost() << std::endl;
+    std::cout << "MST: " << mst->graphTotalCost() << std::endl;
 
-  // graph->printAdajcencyListFromGraph();
-  if (graph->printFlag)
-    printNodeVector(terminals);
+    if (isNthBitSet(algorithmsToRun, 0))
+      std::cout << "TakahashiMatsuyama steinerTree: " << TMSTcost << std::endl;
 
-  writeOutput(
-    fileName,
-    terminals.size(),
-    graph->numberOfNodes,
-    graph->numberOfEdges,
-    DWSTcost,
-    durationDreyfus.count(),
-    TMSTcost,
-    durationTMST.count(),
-    KMBSTcost,
-    durationKMBST.count()
-  );
-  std::cout << "Hend" << std::endl;
+    if (isNthBitSet(algorithmsToRun, 1))
+      std::cout << "KouMarkowskyBerman steinerTree: " << KMBSTcost << std::endl;
+
+    if (isNthBitSet(algorithmsToRun, 2))
+      std::cout << "DreyfusWagner(OPT) steinerTree: " << DWSTcost << std::endl;
+
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "Time:" << std::endl;
+    std::cout << "MST: " << durationMST.count() << " microseconds" << std::endl;
+
+    if (isNthBitSet(algorithmsToRun, 0))
+      std::cout << "TakahashiMatsuyama steinerTree: " << durationTMST.count() << " microseconds" << std::endl;
+
+    if (isNthBitSet(algorithmsToRun, 1))
+      std::cout << "KouMarkowskyBerman steinerTree: " << durationKMBST.count() << " microseconds" << std::endl;
+
+    if (isNthBitSet(algorithmsToRun, 2))
+      std::cout << "DreyfusWagner(OPT) steinerTree: " << durationDreyfus.count() << " microseconds" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << std::endl;
+  }
+
+  if (pF)
+    printUintVector(terminals);
+
+  if (fileName != "") {
+    writeOutput(
+      fileName,
+      terminals.size(),
+      graph->numberOfNodes,
+      graph->numberOfEdges,
+      DWSTcost,
+      durationDreyfus.count(),
+      TMSTcost,
+      durationTMST.count(),
+      TMtimes,
+      KMBSTcost,
+      durationKMBST.count(),
+      KMBtimes
+    );
+  }
 
   return;
 }

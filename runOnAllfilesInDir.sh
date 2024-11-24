@@ -2,7 +2,7 @@
 
 # Ensure the script is passed a directory and a number as arguments
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <ALGORITHMS(number)> <directory>"
+    echo "Usage: <optionally one can use sudo> bash $0 <ALGORITHMS(number)> <directory to read from>"
     exit 1
 fi
 
@@ -11,9 +11,6 @@ ALGORITHMS=$1
 
 # Directory containing files and the number to pass
 DIR=$2
-
-# File to save results to
-# RESULTS=$3
 
 # Check if the provided directory is valid
 if [ ! -d "$DIR" ]; then
@@ -34,7 +31,7 @@ fi
 for FILE in "$DIR"/*; do
     if [ -f "$FILE" ]; then  # Ensure it's a file (not a subdirectory, etc.)
         echo "Processing file: $FILE with ALGORITHMS: $ALGORITHMS"
-        echo "$GRAPH_GENERATOR" 0 "$ALGORITHMS" "$FILE" "$RESULTS"
-        "$GRAPH_GENERATOR" 0 "$ALGORITHMS" "$FILE" "/results/$FILE.results"
+        echo "$GRAPH_GENERATOR" 0 "$ALGORITHMS" "$FILE" "$RESULTS" 0
+        "$GRAPH_GENERATOR" 0 "$ALGORITHMS" "$FILE" "/results/$FILE.results" 0
     fi
 done

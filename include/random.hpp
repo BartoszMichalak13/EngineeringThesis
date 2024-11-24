@@ -12,26 +12,26 @@ class Random {
     Random() : generator(rd()) {}
     ~Random() {};
   public:
-    /**
-     * Random should not be cloneable.
-     */
+    /*
+    Random should not be cloneable.
+    */
     Random(Random &other) = delete;
-    /**
-     * Random should not be assignable.
-     */
+    /*
+    Random should not be assignable.
+    */
     void operator=(const Random &) = delete;
-    /**
-     * This is the static method that controls the access to the singleton
-     * instance. On the first run, it creates a singleton object and places it
-     * into the static field. On subsequent runs, it returns the client existing
-     * object stored in the static field.
-     */
+    /*
+    When invoked first time it creates singleton of random number generator.
+    Later returns this instance.
+    */
     static Random *getInstance();
-    /**
-     * Cleans up the singleton instance.
-     */
+    /*
+    Cleans up the singleton instance.
+    */
     static void destroyInstance();
-
+    /*
+    Returns random number in given range
+    */
     uint32_t generateRandomNumber(uint32_t min, uint32_t max);
 };
 

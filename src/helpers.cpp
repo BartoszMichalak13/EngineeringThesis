@@ -4,6 +4,7 @@
 #include "helpers.hpp"
 #include "debugPrints.hpp"
 #include <functional>
+#include <unordered_set>
 
 /*
 Lists should have the same number of vectors.
@@ -55,6 +56,92 @@ void copyAdjacencyListFromGraphWithNewNodeInstances(std::shared_ptr<Graph> graph
 }
 
 /*
+Moves non empty vectors to free spaces in the front of the array
+*/
+void sortAdjacencyList(uint32_t currentAdjListSize, std::vector<std::shared_ptr<Edge>>*& adjList) {
+  //TODO ponder if optimizeable
+  for (uint32_t i = 0; i < currentAdjListSize; ++i) {
+    if (adjList[i].size() == 0) {
+      for (uint32_t j = i + 1; j < currentAdjListSize; ++j) {
+        if (adjList[j].size() != 0) {
+          //TODO ponder if it's safe
+          std::swap(adjList[i], adjList[j]);
+          break;
+        }
+      }
+    }
+  }
+}
+
+//TODO 3 below chat gen, check them
+// Hash function for Edge based on node IDs
+struct EdgeHash {
+  std::size_t operator()(const std::shared_ptr<Edge>& edge) const {
+    return std::hash<uint32_t>()(edge->start->id) ^ std::hash<uint32_t>()(edge->end->id);
+  }
+};
+
+// Equality comparison for Edge, an edge 1 - 2 in this sense in equal to an edge 2 - 1
+struct EdgeEqual {
+  bool operator()(const std::shared_ptr<Edge>& edge1, const std::shared_ptr<Edge>& edge2) const {
+    return (edge1->start->id == edge2->start->id && edge1->end->id == edge2->end->id) ||
+           (edge1->start->id == edge2->end->id && edge1->end->id == edge2->start->id);
+  }
+};
+
+std::vector<std::shared_ptr<Edge>> flattenAdjacencyList(
+    std::vector<std::shared_ptr<Edge>>* adjacencyList,
+    uint32_t numberOfNodes) {
+
+  std::vector<std::shared_ptr<Edge>> result;
+  std::unordered_set<std::shared_ptr<Edge>, EdgeHash, EdgeEqual> seenEdges;
+
+  for (uint32_t i = 0; i < numberOfNodes; ++i) {
+    std::vector<std::shared_ptr<Edge>> adjacencyVector = adjacencyList[i];
+    for (const auto& edge : adjacencyVector) {
+      // Check if either the edge or its reverse has already been added
+      if (seenEdges.find(edge) == seenEdges.end()) {
+        result.push_back(edge);
+        seenEdges.insert(edge);
+      }
+    }
+  }
+  return result;
+}
+
+/*
+Resets all non zero edges to edges from adjacencyList.
+For Edges with weight == 0 we reset: visited(end and start), pred, succ
+*/
+void resetVisitedStatusAndWeightInCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList,  std::shared_ptr<Graph> g) {
+  for (uint32_t i = 0; i < g->numberOfNodes; ++i) {
+    for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
+      if (localCopyOfAdjacencyList[i].at(j)->weight)
+        localCopyOfAdjacencyList[i].at(j)->weight = g->adjacencyList[i].at(j)->weight;
+      localCopyOfAdjacencyList[i].at(j)->end->visited = false;
+      localCopyOfAdjacencyList[i].at(j)->start->visited = false;
+    }
+  }
+}
+
+/*
+Resets all non zero edges to edges from adjacencyList.
+For Edges with weight == 0 we reset: visited(end and start), pred, succ
+*/
+void fullResetCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList,  std::shared_ptr<Graph> g) {
+  for (uint32_t i = 0; i < g->numberOfNodes; ++i) {
+    for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
+      if (localCopyOfAdjacencyList[i].at(j)->weight)
+        localCopyOfAdjacencyList[i].at(j)->weight = g->adjacencyList[i].at(j)->weight;
+      localCopyOfAdjacencyList[i].at(j)->end->visited = false;
+      localCopyOfAdjacencyList[i].at(j)->start->visited = false;
+      localCopyOfAdjacencyList[i].at(j)->pred = nullptr;
+      localCopyOfAdjacencyList[i].at(j)->succ = nullptr;
+    }
+  }
+}
+
+/*
 returns index from vector which holds value
 */
 int32_t findInUintVector(uint32_t value, std::vector<uint32_t> vec) {
@@ -78,12 +165,13 @@ int32_t findInEdgeVector(uint32_t start, uint32_t end, std::vector<std::shared_p
 returns index from vector which holds edge
 */
 std::shared_ptr<Edge> findInEdgeVectorAndReturnValue(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>> vec) {
-  for (uint32_t i = 0; i < vec.size(); ++i)
-    if ((vec.at(i)->start == start && vec.at(i)->end == end) || (vec.at(i)->start == end && vec.at(i)->end == start))
+  for (uint32_t i = 0; i < vec.size(); ++i) {
+    if ((vec.at(i)->start->id == start->id && vec.at(i)->end->id == end->id) ||
+        (vec.at(i)->start->id == end->id && vec.at(i)->end->id == start->id))
       return vec.at(i);
+  }
   return std::shared_ptr<Edge>(nullptr);
 }
-
 
 /*
 returns idex from array of Nodes which holds value
@@ -118,40 +206,80 @@ std::shared_ptr<Edge> findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector
     if (adjacencyList[edgeStart].at(i)->end->id == edgeEnd) //TODO should be ok, bc we have 2 copies of this edge
       return adjacencyList[edgeStart].at(i);
   }
-  std::cerr << "Error: findEdge returns nullpointer for "<< edgeStart << " - " << edgeEnd << std::endl;
+  //TODO NORMALLY SHOULD BE PRINTED
+  // std::cerr << "Error: findEdge returns nullpointer for "<< edgeStart << " - " << edgeEnd << std::endl;
   return nullptr;
 }
 
 /*
-Resets all non zero edges to edges from adjacencyList.
-For Edges with weight == 0 we reset: visited(end and start), pred, succ
+  Returns instance of edge of weight equal to 0 adjacenct to node of given index.
 */
-void resetVisitedStatusInCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList,  std::shared_ptr<Graph> g) {
-  for (uint32_t i = 0; i < g->numberOfNodes; ++i) {
-    for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
-      if (localCopyOfAdjacencyList[i].at(j)->weight)
-        localCopyOfAdjacencyList[i].at(j)->weight = g->adjacencyList[i].at(j)->weight;
-      localCopyOfAdjacencyList[i].at(j)->end->visited = false;
-      localCopyOfAdjacencyList[i].at(j)->start->visited = false;
-    }
-  }
+std::shared_ptr<Edge> findZeroEdgeInAdjacentTo(uint32_t idx, std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList) {
+  for (uint32_t i = 0; i < localCopyOfAdjacencyList[idx].size(); ++i)
+    if (localCopyOfAdjacencyList[idx].at(i)->weight == 0)
+      return localCopyOfAdjacencyList[idx].at(i);
+  std::cerr << "Error: findZeroEdgeInAdjacentTo returns nullptr; searched index: " << idx << std::endl;
+  return nullptr;
 }
 
-/*
-Resets all non zero edges to edges from adjacencyList.
-For Edges with weight == 0 we reset: visited(end and start), pred, succ
-*/
-void fullResetCopyOfAdjacencyList(std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList,  std::shared_ptr<Graph> g) {
-  for (uint32_t i = 0; i < g->numberOfNodes; ++i) {
-    for (uint32_t j = 0; j < localCopyOfAdjacencyList[i].size(); ++j) {
-      if (localCopyOfAdjacencyList[i].at(j)->weight)
-        localCopyOfAdjacencyList[i].at(j)->weight = g->adjacencyList[i].at(j)->weight;
-      localCopyOfAdjacencyList[i].at(j)->end->visited = false;
-      localCopyOfAdjacencyList[i].at(j)->start->visited = false;
-      localCopyOfAdjacencyList[i].at(j)->pred = nullptr;
-      localCopyOfAdjacencyList[i].at(j)->succ = nullptr;
+uint32_t findShortestPathAndReturnWeight(
+    std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> shortestPathEdgeVec,
+    uint32_t startId,
+    uint32_t endId) {
+
+  for (std::shared_ptr<std::vector<std::shared_ptr<Edge>>>& shortestPath : shortestPathEdgeVec) {
+    if (shortestPath->size() < 2) {
+      if (shortestPath->size() == 1) {
+        Edge e = (*(*shortestPath).at(0));
+        if ((e.start->id == startId && e.end->id == endId) ||
+            (e.end->id == startId && e.start->id == endId))
+        {
+          return (*(*shortestPath).at(0)).weight;
+        } else {
+          continue;
+        }
+      } else {
+        std::cerr << "Path length = " << shortestPath->size() << std::endl;
+        return std::numeric_limits<uint32_t>::max();
+      }
+    } else {
+      Edge e0 = (*(*shortestPath).at(0));
+      Edge e1 = (*(*shortestPath).at(1));
+
+      Edge ePrevToLast = (*(*shortestPath).at(shortestPath->size() - 2));
+      Edge eLast       = (*(*shortestPath).at(shortestPath->size() - 1));
+
+      // search for startId if found do nothing, else skip
+      if (e0.start->id == startId && !(e1.start->id == startId || e1.end->id == startId)) {
+      } else if (e0.end->id == startId && !(e1.start->id == startId || e1.end->id == startId)) {
+      } else {
+        if (eLast.start->id == startId && !(ePrevToLast.start->id == startId || ePrevToLast.end->id == startId)) {
+        } else if (eLast.end->id == startId && !(ePrevToLast.start->id == startId || ePrevToLast.end->id == startId)) {
+        } else { // startId not found
+          continue;
+        }
+      }
+
+      //search for endId if found return path weight, else skip
+      if (e0.start->id == endId && !(e1.start->id == endId || e1.end->id == endId)) {
+        return calculatePathWeight(*shortestPath);
+      } else if (e0.end->id == endId && !(e1.start->id == endId || e1.end->id == endId)) {
+        return calculatePathWeight(*shortestPath);
+      } else {
+        if (eLast.start->id == endId && !(ePrevToLast.start->id == endId || ePrevToLast.end->id == endId)) {
+          return calculatePathWeight(*shortestPath);
+        } else if (eLast.end->id == endId && !(ePrevToLast.start->id == endId || ePrevToLast.end->id == endId)) {
+          return calculatePathWeight(*shortestPath);
+        } else {
+          // endId not found
+          // continue bo moze byc wiele z sciezek ze startId
+          continue;
+        }
+      }
     }
   }
+  std::cerr << "Path from " << startId << " to " << endId << "not found" << std::endl;
+  return std::numeric_limits<uint32_t>::max();
 }
 
 /*
@@ -226,68 +354,6 @@ void addTotmptreeEdgesIfNotAlreadyIn(std::vector<PseudoEdge>& tmptreeEdges, std:
 }
 
 /*
-Maybe add field to the Edge - isNULL?
-*/
-std::shared_ptr<Edge> findZeroEdgeInAdjacentTo(uint32_t idx, std::vector<std::shared_ptr<Edge>>*& localCopyOfAdjacencyList) {
-  for (uint32_t i = 0; i < localCopyOfAdjacencyList[idx].size(); ++i)
-    if (localCopyOfAdjacencyList[idx].at(i)->weight == 0)
-      return localCopyOfAdjacencyList[idx].at(i);
-  std::cerr << "Error: findZeroEdgeInAdjacentTo returns nullptr; searched index: " << idx << std::endl;
-  return nullptr;
-}
-
-/*
-Returns number of edges in clique of |V| = numberOfNodes
-*/
-uint32_t numberOfEdgesInClique(uint32_t numberOfNodes) {
-  uint32_t sum = 0;
-  for (uint32_t i = 1; i < numberOfNodes; ++i)
-    sum += i;
-  return sum;
-}
-
-//TODO WROOOOOOOONG WE HAVE TO FIND WHICH ROW HAS start->id AS VALUE!!!!!!!
-/*
-Removes single edge instance from adjacency list, used as helper function for removeEdgeFromAdjacencyList
-*/
-void removeSingleEdgeFromAdjacencyList(std::shared_ptr<Node> start, std::shared_ptr<Node> end, std::vector<std::shared_ptr<Edge>>*& adjList) {
-  std::shared_ptr<Edge> edge = findInEdgeVectorAndReturnValue(start, end, adjList[start->id]);
-  std::cout << "removing edge: " << std::endl;
-  printEdge(edge);
-  if (edge != nullptr) {
-    adjList[start->id].erase(std::remove(adjList[start->id].begin(), adjList[start->id].end(), edge), adjList[start->id].end());
-  } else {
-    std::cerr << "Error: Edge not found in removeFromAdjacencyList part" << std::endl;
-  }
-}
-
-/*
-Removes both instances of edge from adjacency list
-*/
-void removeEdgeFromAdjacencyList(std::shared_ptr<Edge> e, std::vector<std::shared_ptr<Edge>>*& adjList) {
-  removeSingleEdgeFromAdjacencyList(e->start, e->end, adjList);
-  removeSingleEdgeFromAdjacencyList(e->end, e->start, adjList);
-}
-
-/*
-Moves non empty vectors to free spaces in the front of the array
-*/
-void sortAdjacencyList(uint32_t currentAdjListSize, std::vector<std::shared_ptr<Edge>>*& adjList) {
-  //TODO ponder if optimizeable
-  for (uint32_t i = 0; i < currentAdjListSize; ++i) {
-    if (adjList[i].size() == 0) {
-      for (uint32_t j = i + 1; j < currentAdjListSize; ++j) {
-        if (adjList[j].size() != 0) {
-          //TODO ponder if it's safe
-          std::swap(adjList[i], adjList[j]);
-          break;
-        }
-      }
-    }
-  }
-}
-
-/*
 Adds node to given vector if it is not already in and increases counter
 */
 void addNodeIfNotAlreadyIn(uint32_t nodeId, std::vector<uint32_t>& vec, uint32_t& counter) {
@@ -309,9 +375,11 @@ void addEdgeIfNotAlreadyIn(std::shared_ptr<Edge> edge, std::vector<std::shared_p
   }
 }
 
-// TODO posegreguj te funkcje jakos sensownie
 /*
-w
+  Updates weight of given edge to 0.
+  Updates its predecessor to loop.
+  Finds this edge in given original adjacency list.
+  Adds it to a tmpTree of PseudoEdges.
 */
 void embedEdgeIntoTree(
     std::shared_ptr<Edge> &e,
@@ -322,16 +390,24 @@ void embedEdgeIntoTree(
   updatePredToLoop(e, localCopyOfAdjacencyList);
   std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
   addTotmptreeEdgesIfNotAlreadyIn(tmpTreeEdges, edg);
-
 }
 
-std::shared_ptr<std::vector<uint32_t>> verticesToUint(std::shared_ptr<Node>* vertices, uint32_t numberOfNodes) {
+std::shared_ptr<std::vector<uint32_t>> nodeArrayToUint(std::shared_ptr<Node>* vertices, uint32_t numberOfNodes) {
   std::shared_ptr<std::vector<uint32_t>> vertexIdVector = std::make_shared<std::vector<uint32_t>>();
   for (uint32_t i = 0; i < numberOfNodes; ++i)
     vertexIdVector->push_back(vertices[i]->id);
   return vertexIdVector;
 }
 
+/*
+Returns number of edges in clique of |V| = numberOfNodes
+*/
+uint32_t numberOfEdgesInClique(uint32_t numberOfNodes) {
+  uint32_t sum = 0;
+  for (uint32_t i = 1; i < numberOfNodes; ++i)
+    sum += i;
+  return sum;
+}
 
 uint32_t calculatePathWeight(std::vector<std::shared_ptr<Edge>> path) {
   uint32_t pathWeight = 0;
@@ -340,69 +416,7 @@ uint32_t calculatePathWeight(std::vector<std::shared_ptr<Edge>> path) {
     return pathWeight;
 }
 
-
-uint32_t findShortestPathAndReturnWeight(
-    std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> shortestPathEdgeVec,
-    uint32_t startId,
-    uint32_t endId) {
-
-  for (std::shared_ptr<std::vector<std::shared_ptr<Edge>>>& shortestPath : shortestPathEdgeVec) {
-    if (shortestPath->size() < 2) {
-      if (shortestPath->size() == 1) {
-        // std::cout << "Path length(ok) = " << shortestPath->size() << std::endl;
-        // printEdgeVector((*shortestPath));
-        Edge e = (*(*shortestPath).at(0));
-        if ((e.start->id == startId && e.end->id == endId) ||
-            (e.end->id == startId && e.start->id == endId))
-        {
-          return (*(*shortestPath).at(0)).weight;
-        } else {
-          continue;
-        }
-      } else {
-        std::cerr << "Path length = " << shortestPath->size() << std::endl;
-        return std::numeric_limits<uint32_t>::max();
-      }
-    } else {
-      Edge e0 = (*(*shortestPath).at(0));
-      Edge e1 = (*(*shortestPath).at(1));
-
-      Edge ePrevToLast = (*(*shortestPath).at(shortestPath->size() - 2));
-      Edge eLast       = (*(*shortestPath).at(shortestPath->size() - 1));
-
-      // search for startId if found do nothing, else skip
-      if (e0.start->id == startId && !(e1.start->id == startId || e1.end->id == startId)) {
-      } else if (e0.end->id == startId && !(e1.start->id == startId || e1.end->id == startId)) {
-      } else {
-        if (eLast.start->id == startId && !(ePrevToLast.start->id == startId || ePrevToLast.end->id == startId)) {
-        } else if (eLast.end->id == startId && !(ePrevToLast.start->id == startId || ePrevToLast.end->id == startId)) {
-        } else { // startId not found
-          continue;
-        }
-      }
-
-      //search for endId if found return path weight, else skip
-      if (e0.start->id == endId && !(e1.start->id == endId || e1.end->id == endId)) {
-        return calculatePathWeight(*shortestPath);
-      } else if (e0.end->id == endId && !(e1.start->id == endId || e1.end->id == endId)) {
-        return calculatePathWeight(*shortestPath);
-      } else {
-        if (eLast.start->id == endId && !(ePrevToLast.start->id == endId || ePrevToLast.end->id == endId)) {
-          return calculatePathWeight(*shortestPath);
-        } else if (eLast.end->id == endId && !(ePrevToLast.start->id == endId || ePrevToLast.end->id == endId)) {
-          return calculatePathWeight(*shortestPath);
-        } else {
-          // endId not found
-          // continue bo moze byc wiele z sciezek ze startId
-          continue;
-        }
-      }   //TODO WRZUC DO UZUPELNIENIA MACIERZY W DREYFUS
-    }
-  }
-  std::cerr << "Path from " << startId << " to " << endId << "not found" << std::endl;
-  return std::numeric_limits<uint32_t>::max();
-}
-
+// Checks if nth bit is set to 1
 bool isNthBitSet(uint32_t num, uint32_t n) {
     return (num & (1 << n)) != 0;
 }

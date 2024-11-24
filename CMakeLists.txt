@@ -19,7 +19,7 @@ add_executable(GraphGenerator
   src/main.cpp
   src/graph.cpp
   src/random.cpp
-  src/node.cpp
+  src/GraphStructures.cpp
   src/utils.cpp
   src/debugPrints.cpp
   src/helpers.cpp

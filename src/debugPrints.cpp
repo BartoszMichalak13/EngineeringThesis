@@ -5,16 +5,11 @@
 #include "debugPrints.hpp"
 #include <iostream>
 
-/*
-Prints PseudoEdge
-*/
+
 void tmpPseudoEdgePrint(PseudoEdge p) {
   std::cout << p.start << " - " << p.end << "(" << p.weight << ")" << std::endl;
 }
 
-/*
-Prints all PseudoEdges in given vector
-*/
 void tmpPseudoEdgePrintVec(std::vector<PseudoEdge> vec) {
   for (const PseudoEdge& p : vec) {
     tmpPseudoEdgePrint(p);
@@ -36,16 +31,9 @@ void printAdajcencyList(std::vector<std::shared_ptr<Edge>>* adjList, uint32_t nu
   }
 }
 
-void printEdgePred(std::shared_ptr<Edge> e) {
-  if (e->pred == nullptr)
-    std::cout << "e.pred doesn't exist; " << std::endl;
-  else
-    std::cout << "e.pred->end->id " << e->pred->end->id << "; e.pred->start->id " << e->pred->start->id << "; e.pred->weight " << e->pred->weight << "; " << std::endl;
-}
-
 void printEdge(std::shared_ptr<Edge> e) {
   if (e == nullptr) {
-      std::cout << "e.end doesn't exist" << std::endl;
+      std::cout << "e doesn't exist" << std::endl;
     return;
   }
   if (e->end == nullptr) {
@@ -68,6 +56,12 @@ void printEdge(std::shared_ptr<Edge> e) {
     std::cout  << "e.succ->start->id " << e->succ->start->id << "; e.succ->end->id " << e->succ->end->id << "; e.succ->weight" << e->succ->weight << std::endl;
 }
 
+void printEdgePred(std::shared_ptr<Edge> e) {
+  if (e->pred == nullptr)
+    std::cout << "e.pred doesn't exist; " << std::endl;
+  else
+    std::cout << "e.pred->end->id " << e->pred->end->id << "; e.pred->start->id " << e->pred->start->id << "; e.pred->weight " << e->pred->weight << "; " << std::endl;
+}
 
 void printEdgeVector(std::vector<std::shared_ptr<Edge>> vec) {
   std::cout << "print vector" << std::endl;
@@ -75,11 +69,10 @@ void printEdgeVector(std::vector<std::shared_ptr<Edge>> vec) {
     printEdge(vec.at(i));
 }
 
-//TODO ta nazwa kłamie
-void printNodeVector(std::vector<uint32_t> vec) {
+void printUintVector(std::vector<uint32_t> vec) {
   std::cout << "print nodes" << std::endl;
   for (uint32_t i = 0; i < vec.size(); ++i)
-    std::cout << vec.at(i) << ", ";
+    std::cout << "el("<<i<<"):" << vec.at(i) << ", ";
   std::cout << std::endl;
 }
 
@@ -94,7 +87,6 @@ void printAdajcencyListPred(std::vector<std::shared_ptr<Edge>>* adjList, uint32_
     std::cout << std::endl;
   }
 }
-
 
 void printMatrix(const std::vector<std::vector<uint32_t>>& matrix) {
   for (const auto& row : matrix) {

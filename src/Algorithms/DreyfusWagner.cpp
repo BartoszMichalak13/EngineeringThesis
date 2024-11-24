@@ -9,14 +9,11 @@
 #include <vector>
 #include <memory>
 #include <limits>
-
+#include <iomanip>
 
 #include "graph.hpp"
 #include "helpers.hpp"
 #include "debugPrints.hpp"
-
-
-#include <iomanip>
 
 bool DreyfusPrintFlag = true;
 
@@ -97,7 +94,7 @@ std::vector<std::set<uint32_t>> generateSubsets(std::vector<uint32_t> terminals)
       // otherwise exclude arr[j]
       if ((i & (1 << j)) > 0)
       {
-          newSubset.insert(terminals[j]);
+        newSubset.insert(terminals[j]);
       }
     }
 
@@ -127,10 +124,6 @@ std::vector<std::set<uint32_t>> generateSubsets(std::vector<uint32_t> terminals)
   return allSubsets;
 }
 
-
-
-
-
 std::set<uint32_t> getSetFromMap(uint32_t idx)
 {
   std::set<uint32_t> subset;
@@ -143,9 +136,6 @@ std::set<uint32_t> getSetFromMap(uint32_t idx)
   }
   return subset;
 }
-
-
-
 
 /*
 repair
@@ -192,15 +182,12 @@ uint32_t fetchIndexofMapofSets(std::set<uint32_t> subset)
   If you have a std::vector<std::vector<int>> G and you call G.size(),
   it will return the number of rows (or outer vectors) in G - by GPT
 */
-
 uint32_t Graph::calculateSteiner(
     std::vector<uint32_t> C,
     std::vector<std::vector<uint32_t>> adjMatrix,
     std::vector<std::set<uint32_t>> allSubsets,
     uint32_t q)
 {
-  // std::shared_ptr<Graph> self = shared_from_this();
-
   uint32_t sizetable = allSubsets.size() + numberOfNodes; //+ graph.size(); //
   std::vector<std::vector<uint32_t>> steinerDistanceTable(
       sizetable,
@@ -434,8 +421,6 @@ uint32_t Graph::DreyfusWagner(std::vector<uint32_t> terminals) {
   // get graph instance
   std::shared_ptr<Graph> self = shared_from_this();
 
-
-
   std::vector<uint32_t> originalTerminals;
   for (uint32_t i = 0; i < terminals.size(); ++i)
     originalTerminals.push_back(terminals.at(i));
@@ -448,15 +433,14 @@ uint32_t Graph::DreyfusWagner(std::vector<uint32_t> terminals) {
   std::vector<std::set<uint32_t>> allSubsets = generateSubsets(terminals);
   // std::vector<std::set<uint32_t>> allSubsets = generateSubsets(*uintVertices);
 
-  // printNodeVector(terminals);
+  // printUintVector(terminals);
   // terminals.erase(terminals.begin());
-  // printNodeVector(terminals);
+  // printUintVector(terminals);
 
 
   // convert vertices to uint vec
-  std::shared_ptr<std::vector<uint32_t>> uintVertices = verticesToUint(vertices, numberOfNodes);
+  std::shared_ptr<std::vector<uint32_t>> uintVertices = nodeArrayToUint(vertices, numberOfNodes);
 
-  //TODO czasem tu staje
   // calculate all shortest paths
   std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> tmpShortestPaths = AllPairsShortestPath((*uintVertices));
 
@@ -490,11 +474,7 @@ uint32_t Graph::DreyfusWagner(std::vector<uint32_t> terminals) {
     q);
   // tmpShortestPaths.clear();
   // std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>>().swap(tmpShortestPaths);
-
   subsetMap.clear();
 
-
- return steinerWeight;
+  return steinerWeight;
 }
-
-//TODO sp oddcycle 3 dobry na naprawe takahasi

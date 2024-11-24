@@ -3,7 +3,10 @@
 
 #include <cstdint>
 
-// Function to parse input and update parameters
+// TODO ta nazwa kłamie - split into multiple functions?
+/*
+TODO fill description
+*/
 std::shared_ptr<Graph> parseInput(
     int argc,
     char *argv[],
@@ -18,6 +21,9 @@ std::shared_ptr<Graph> parseInput(
     bool &printFlag,
     std::vector<uint32_t> &terminals);
 
+/*
+Writes all passed arguments to a file. If it or it's directories doesn't exist it should create it.
+*/
 void writeOutput(
     const std::string& fileName,
     uint32_t numberOfTerminals,
@@ -27,8 +33,9 @@ void writeOutput(
     uint32_t DreyfusWagnerTime,
     uint32_t TakahashiMatsuyamaCost,
     uint32_t TakahashiMatsuyamaTime,
+    std::vector<std::chrono::microseconds> TMtimes,
     uint32_t KouMarkowskyBermanCost,
-    uint32_t KouMarkowskyBermanTime);
-
+    uint32_t KouMarkowskyBermanTime,
+    std::vector<std::chrono::microseconds> KMBtimes);
 
 #endif

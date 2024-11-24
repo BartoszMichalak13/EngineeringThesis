@@ -1,0 +1,17 @@
+This program was tested on:
+    Ubuntu 22.04.5 LTS (jammy)
+
+Needed software:
+  Main code:
+    g++ compiler
+    cmake 
+    
+  Data analysis:
+    python:    
+      pandas 
+      numpy 
+      seaborn 
+      matplotlib
+    jupyter notebook
+
+

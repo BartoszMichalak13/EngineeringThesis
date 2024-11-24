@@ -10,7 +10,7 @@ class Node {
     uint32_t id;
     bool visited;
     
-    Node() :            id(0),  visited(false) {}
+    Node()            : id(0),  visited(false) {}
     Node(uint32_t id) : id(id), visited(false) {}
     ~Node() {}
 
@@ -27,9 +27,12 @@ class Edge{
     std::shared_ptr<Node> start;
     uint32_t weight;
     std::shared_ptr<Node> end;
-    std::shared_ptr<Edge> pred;
-    std::shared_ptr<Edge> succ;
 
+    // Predecessor of this edge
+    std::shared_ptr<Edge> pred;
+
+    //TODO unused delete
+    std::shared_ptr<Edge> succ;
 
     Edge(bool dummy)                                                                                                                      : start(0),     weight(!dummy), end(0),   pred(this),    succ(nullptr) {}
     Edge()                                                                                                                                : start(0),     weight(0),      end(0),   pred(nullptr), succ(nullptr) {}
@@ -38,7 +41,7 @@ class Edge{
     Edge(std::shared_ptr<Node> start, uint32_t weight, std::shared_ptr<Node> end, std::shared_ptr<Edge> pred, std::shared_ptr<Edge> succ) : start(start), weight(weight), end(end), pred(pred),    succ(succ)    {}
 };
 
-// std::shared_ptr<Edge> constructSelfLoopInitEdge(uint32_t v) {
+// Usefull when starting Dijkstra search and we intend to go back to the beggining node
 std::shared_ptr<Edge> constructSelfLoopInitEdge(std::shared_ptr<Node> v);
 
 #endif

@@ -22,7 +22,7 @@ Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
   this->numberOfEdges = numberOfEdges;
   this->adjacencyList = new std::vector<std::shared_ptr<Edge>>[numberOfNodes];
   this->vertices = new std::shared_ptr<Node>[numberOfNodes];
-  for (uint32_t i = 0; i < numberOfNodes; ++i) 
+  for (uint32_t i = 0; i < numberOfNodes; ++i)
     vertices[i] = std::shared_ptr<Node>(new Node(i));
 }
 
@@ -37,7 +37,7 @@ Graph::Graph(std::vector<uint32_t> nodes, std::vector<std::shared_ptr<Edge>> edg
   this->vertices = new std::shared_ptr<Node>[numberOfNodes];
   for (uint32_t i = 0; i < numberOfNodes; ++i)
     vertices[i] = std::shared_ptr<Node>(new Node(nodes.at(i)));
-  
+
   for (uint32_t i = 0; i < numberOfEdges; ++i) {
     int32_t idx1 = findInArray(edges.at(i)->start->id, vertices, numberOfNodes);
     if (idx1 < 0)
@@ -177,7 +177,7 @@ bool Graph::bfs() {
     }
   }
   return isAcyclic;
-} 
+}
 
 /*
 Calculates total cost of all graph edges
@@ -191,7 +191,7 @@ uint32_t Graph::graphTotalCost() {
         std::cerr << "ERROR;" << std::endl;
     }
   }
-  return cost/2; //we counted both edges 0-1 and 1-0 
+  return cost/2; //we counted both edges 0-1 and 1-0
 }
 
 //TODO clear this mess
@@ -248,6 +248,23 @@ void Graph::searchNeighboursV2(
   }
 }
 
+
+// TODO TMP
+// Function to print the priority_queue
+void printPriorityQueue(
+    std::priority_queue<std::shared_ptr<Edge>,
+    std::vector<std::shared_ptr<Edge>>,
+    EdgeWeightComparatorOnPointers> toVisit)
+{
+    std::cout << "printPriorityQueue IN" << std::endl;
+    while (!toVisit.empty()) {
+        auto edge = toVisit.top();
+        printEdge(edge);
+        // std::cout << "\n";
+        toVisit.pop();
+    }
+}
+
 /*
 All pairs shortest paths
 vector of vectors of Edges
@@ -256,6 +273,9 @@ TODO does it always work as intended?
 */
 // std::shared_ptr<std::vector<std::shared_ptr<Edge>>>* Graph::AllPairsShortestPath(std::vector<uint32_t> terminals) {
 std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairsShortestPath(std::vector<uint32_t> terminals) {
+
+  // just to be sure reset visitedStatus
+  resetVisitedStatus();
 
   // get graph instance
   std::shared_ptr<Graph> self = shared_from_this();
@@ -297,10 +317,15 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
       return std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>>();
     }
 
-    //add all neighbours of startingNode
+    std::shared_ptr<Edge> selfLoopInitEdge = constructSelfLoopInitEdge(vertices[startingNodeIdx]);
     for (uint32_t i = 0; i < localCopyOfAdjacencyList[startingNodeIdx].size(); ++i)
+    {
+      updatePred(localCopyOfAdjacencyList[startingNodeIdx].at(i), selfLoopInitEdge, localCopyOfAdjacencyList);
       toVisit.push(localCopyOfAdjacencyList[startingNodeIdx].at(i));
-    vertices[startingNodeIdx]->visited = true; //TODO does it always work?
+    }
+    vertices[startingNodeIdx]->visited = true;
+
+
 
     while (!toVisit.empty() && !terminals.empty()) {
       std::shared_ptr<Edge> e = toVisit.top();
@@ -310,36 +335,48 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
 
       int32_t idx = findInUintVector(nextNodeIndex, terminals);
       if (idx > -1) {
-        std::shared_ptr<Edge> copyOfe = e;
         terminals.erase(terminals.begin() + idx);
-        // std::cout << "adding path from " << startingNode << " to " << nextNodeIndex << std::endl;
 
-        //TODO can we put that code in while part? (same in Takahashi)
-        std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
-        shortestPath->push_back(edg);
+        std::shared_ptr<Edge> edgeFromAdjList = findEdge(startingNode, nextNodeIndex, adjacencyList);
+        // If shortest path is just one edge add it
+        if (edgeFromAdjList != nullptr && e->weight > edgeFromAdjList->weight)
+        {
+          shortestPath->push_back(edgeFromAdjList);
+          allPairsOfShortestPaths.push_back(shortestPath);
+          shortestPath = std::make_shared<std::vector<std::shared_ptr<Edge>>>();
+        }
+        else // add whole path
+        {
+          std::shared_ptr<Edge> copyOfe = e;
 
-        std::shared_ptr<Edge> oldPred = e->pred;
-        // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
-        // while (oldPred != nullptr && e->start->id != startingNode) {
-        while (oldPred != nullptr && (e->start->id != startingNode && e->end->id != startingNode)) {
-          e = oldPred;
-          oldPred = e->pred;
+          //TODO can we put that code in while part? (same in Takahashi)
           std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
           shortestPath->push_back(edg);
-        } // untill we reach beginning of the path
-        allPairsOfShortestPaths.push_back(shortestPath);
+          std::shared_ptr<Edge> oldPred = e->pred;
+          // zero edges and add their original instance from adjacecnyList to tmptreeEdgeas
+          while (oldPred != nullptr && (e->start->id != startingNode && e->end->id != startingNode))
+          {
+            e = oldPred;
+            oldPred = e->pred;
+            std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
+            shortestPath->push_back(edg);
+          } // untill we reach beginning of the path
 
-        // reset shortest path
-        shortestPath = std::make_shared<std::vector<std::shared_ptr<Edge>>>();
+          allPairsOfShortestPaths.push_back(shortestPath);
 
-        // reset e to prev state to use it in searchNeighboursV2
-        e = copyOfe;
+          // reset shortest path
+          shortestPath = std::make_shared<std::vector<std::shared_ptr<Edge>>>();
+
+          // reset e to prev state to use it in searchNeighboursV2
+          e = copyOfe;
+        }
       }
+
       searchNeighboursV2(toVisit, localCopyOfAdjacencyList, nextNodeIndex, e);
     }
     if (!terminals.empty()) {
       std::cerr << "Error: Could not find path between " << startingNode << " and ";
-      printNodeVector(terminals);
+      printUintVector(terminals);
 
       delete[] localCopyOfAdjacencyList;
       localCopyOfAdjacencyList = nullptr;
@@ -371,7 +408,7 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
 }
 
 //TODO centralny punkt majacy polaczenie do all innych w grafie, sprawdz jak to sie zachowuje
- 
+
 /*
 This is Dijkstra algorithm, that stops when we have found node2
 
@@ -493,7 +530,7 @@ std::shared_ptr<Graph> Graph::PrimMST() {// do it with priority Queue, maybe my 
 
 void Graph::printData() {
   for (uint32_t i = 0; i < numberOfNodes; ++i) {
-    std::cout << "node " << vertices[i]->id << " is connected to:\n\t"; 
+    std::cout << "node " << vertices[i]->id << " is connected to:\n\t";
     for (const auto& edge : adjacencyList[i]) {
       std::cout << static_cast<uint32_t>(edge->end->id) << " cost(" << edge->weight << ") ";
       if(edge->weight == 0)
@@ -572,3 +609,32 @@ std::vector<std::vector<uint32_t>> Graph::toAdjacencyMatrix() {
   return adjacencyMatrix;
 }
 
+// TODO Possibly merge two functions below into 1
+/*
+  Removes single edge instance from GIVEN adjacency list, used as helper function for removeEdgeFromAdjacencyList
+  If this function is run then findInEdgeVectorAndReturnValue Errors can be ignored.
+*/
+void Graph::removeSingleEdgeFromAdjacencyList(
+    std::shared_ptr<Node> start,
+    std::shared_ptr<Node> end,
+    std::vector<std::shared_ptr<Edge>>*& adjList)
+{
+  for (uint32_t i = 0; i < numberOfNodes; ++i) {
+    std::shared_ptr<Edge> edge = findInEdgeVectorAndReturnValue(start, end, adjList[i]);
+    if (edge != nullptr) {
+      adjList[i].erase(std::remove(adjList[i].begin(), adjList[i].end(), edge), adjList[i].end());
+      return;
+    }
+  }
+  std::cerr << "Error: Edge: ("<< start->id << "," << end->id <<") not found in removeSingleEdgeFromAdjacencyList" << std::endl;
+}
+
+/*
+  Removes both instances of edge from GIVEN adjacency list.
+  If this function is run then findInEdgeVectorAndReturnValue Errors can be ignored.
+
+*/
+void Graph::removeEdgeFromAdjacencyList(std::shared_ptr<Edge> e, std::vector<std::shared_ptr<Edge>>*& adjList) {
+  removeSingleEdgeFromAdjacencyList(e->start, e->end, adjList);
+  removeSingleEdgeFromAdjacencyList(e->end, e->start, adjList);
+}
