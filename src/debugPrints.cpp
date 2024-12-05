@@ -72,7 +72,7 @@ void printEdgeVector(std::vector<std::shared_ptr<Edge>> vec) {
 void printUintVector(std::vector<uint32_t> vec) {
   std::cout << "print nodes" << std::endl;
   for (uint32_t i = 0; i < vec.size(); ++i)
-    std::cout << "el("<<i<<"):" << vec.at(i) << ", ";
+    std::cout << "el("<<i<<")=" << vec.at(i) << ", ";
   std::cout << std::endl;
 }
 

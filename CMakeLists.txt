@@ -12,7 +12,7 @@ include_directories(include)
 
 # Set optimization flag for Release mode
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wall -g") # as for 15.10.2024 almost x4 faster -O3 normally, without for debugining
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wall -fsanitize=address -g") # as for 15.10.2024 almost x4 faster -O3 normally, without for debugining
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wall -fsanitize=address -g -O3") # as for 15.10.2024 almost x4 faster -O3 normally, without for debugining
 
 # Specify the executable target and its source files
 add_executable(GraphGenerator

@@ -2,7 +2,8 @@
 
 # Ensure the script is passed a directory and a number as arguments
 if [ "$#" -ne 2 ]; then
-    echo "Usage: <optionally one can use sudo> bash $0 <ALGORITHMS(number)> <directory to read from>"
+    echo "Usage: bash $0 <ALGORITHMS(number)> <directory to read from>"
+    echo "Notes: Optionally one can use sudo; Use this script from its directory"
     exit 1
 fi
 

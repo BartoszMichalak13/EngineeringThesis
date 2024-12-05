@@ -139,24 +139,6 @@ std::vector<uint32_t> generateTerminals(uint32_t numberOfNodes, uint32_t numberO
   return terminals;
 }
 
-// void Graph::bfs() {
-//   std::queue<std::shared_ptr<Node>> toVisit;
-//   std::shared_ptr<Node> currentNode(vertices[0]);
-//   toVisit.push(currentNode);
-//   while (!toVisit.empty()) {
-//     currentNode = toVisit.front();
-//     toVisit.pop();
-//     currentNode->visited = true;
-//     int32_t idx = findInArray(currentNode->id, vertices, numberOfNodes);
-//     for (const auto& edge : adjacencyList[idx]) {
-//       if(!edge->end->visited) {
-//         toVisit.push(edge->end);
-//         edge->end->visited = true;
-//       }
-//     }
-//   }
-// }
-
 bool Graph::bfs() {
   bool isAcyclic = true;
   std::queue<std::shared_ptr<Node>> toVisit;
@@ -326,7 +308,6 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
     vertices[startingNodeIdx]->visited = true;
 
 
-
     while (!toVisit.empty() && !terminals.empty()) {
       std::shared_ptr<Edge> e = toVisit.top();
       toVisit.pop();
@@ -391,8 +372,8 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
       resetVisitedStatus();
 
       // reset priority queue
-      while(!toVisit.empty())
-        toVisit.pop();
+      toVisit = std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers>();
+
 
       // reset localCopyOfAdjacencyList NOTE if this doesn't work, put new localCopyOfAdjacencyList in for
       fullResetCopyOfAdjacencyList(localCopyOfAdjacencyList, self);
@@ -549,17 +530,6 @@ void Graph::printVisitedStatus() {
   for (uint32_t i = 0; i < numberOfNodes; ++i)
     std::cout << "node " << i << " visited = " << vertices[i]->visited << std::endl;
 }
-
-// bool Graph::isConnected() {
-//   resetVisitedStatus();
-//   bool isAcyclic = bfs();
-//   bool returnValue = true;
-//   for (uint32_t i = 0; i < numberOfNodes; ++i)
-//     if (!vertices[i]->visited)
-//       return false;
-//   resetVisitedStatus();
-//   return returnValue;
-// }
 
 /*
 Checks if graph is acyclic and connected

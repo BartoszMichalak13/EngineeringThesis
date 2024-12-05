@@ -34,14 +34,17 @@
 # Build
 /build/
 
-#Graph Instances
+# Graph Instances
 /GraphInstances/
 
-#Results
+# Results
 /results/
 
-#plots/
+# plots/
 /plots/
 
 # jupyter notebook checkpoints
 /.ipynb_checkpoints/
+
+# It just removes uncessary data files
+tmpBASH.sh

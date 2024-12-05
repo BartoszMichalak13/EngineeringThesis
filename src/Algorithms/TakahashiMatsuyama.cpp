@@ -82,8 +82,8 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(
     {
       startPrepareForNextIteration = std::chrono::high_resolution_clock::now();
 
-      while(!toVisit.empty())
-        toVisit.pop();
+      // reset priority queue
+      toVisit = std::priority_queue<std::shared_ptr<Edge>, std::vector<std::shared_ptr<Edge>>, EdgeWeightComparatorOnPointers>();
 
       /*                             Add neighbours of all unique nodes in tree to the queue                                     */
       std::vector<uint32_t> uniqueNodes = tmpPseudoEdgeReturnUniqueNumbers(tmpTreeEdges);//TODO test it
