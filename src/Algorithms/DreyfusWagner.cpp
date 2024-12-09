@@ -1,5 +1,3 @@
-// https://bitbucket.org/NachiketDan/dreyfus-wagner/src/master/
-
 #include <iostream>
 #include <vector>
 #include <list>
@@ -15,11 +13,8 @@
 #include "helpers.hpp"
 #include "debugPrints.hpp"
 
-bool DreyfusPrintFlag = true;
+bool DreyfusPrintFlag = false;
 
-//TODO hipoteza czemu wyniki zle: wyniki są zawyżone przez fakt, że biorąc shortest path miedzy 2 wierzcholkami nie zapisujemy krawedzi,
-// ergo one moga byc liczne 2x
-//
 bool compareUintMatrices(std::vector<std::vector<uint32_t>> matrix1, std::vector<std::vector<uint32_t>> matrix2, uint32_t size) {
   bool status = true;
   // Check if matrices have the specified size
@@ -66,38 +61,25 @@ bool findInSet(std::set<uint32_t> A, uint32_t value){
   return false;
 }
 
-//TODO clear this file
-//TODO check if floyd is maybe faster?
-//TODO how about aadjacency matrix instead of list,
-//maybe I'll get extra time for no significant increase in memory usage
-
 std::map<std::set <uint32_t>, uint32_t> subsetMap;
 
-std::vector<std::set<uint32_t>> generateSubsets(std::vector<uint32_t> terminals) { //, uint32_t terminalsSize) { //, uint32_t graphsize) {
+std::vector<std::set<uint32_t>> generateSubsets(std::vector<uint32_t> terminals) {
   const uint32_t terminalsSize = terminals.size();
   const uint32_t count = pow(2, terminalsSize);
 
   std::vector<std::set<uint32_t>> allSubsets;
   uint32_t subsetIndex = 0;
-  // The outer for loop will run 2^n times to print all subset .
-  // Here variable i will act as a binary counter
 
   for (uint32_t i = 0; i < count; ++i)
   {
-    // The inner for loop will run n times , As the maximum number of elements a set can have is n
-    // This loop will generate a subset
     std::set<uint32_t> newSubset;
     for (uint32_t j = 0; j < terminalsSize; ++j)
     {
-      // This if condition will check if jth bit in binary representation of  i  is set or not
-      // if the value of (i & (1 << j)) is greater than 0 , include arr[j] in the current subset
-      // otherwise exclude arr[j]
       if ((i & (1 << j)) > 0)
       {
         newSubset.insert(terminals[j]);
       }
     }
-
     if (newSubset.size() > 1)
     {
       allSubsets.push_back(newSubset);
@@ -105,21 +87,6 @@ std::vector<std::set<uint32_t>> generateSubsets(std::vector<uint32_t> terminals)
       subsetIndex++;
     }
   }
-
-  // for (auto const &x : subsetMap)
-  // {
-  //   std::cout << "Subset = ";
-  //   std::set<uint32_t> element = x.first;
-  //   for (auto f : element)
-  //   {
-  //     std::cout << f << " ";
-  //   }
-
-  //   std::cout << std::endl;
-  //   std::cout << "Index = " << x.second << std::endl;
-  // }
-
-  // std::cout<<"Completed subsets"<< std::endl;
 
   return allSubsets;
 }
@@ -137,9 +104,6 @@ std::set<uint32_t> getSetFromMap(uint32_t idx)
   return subset;
 }
 
-/*
-repair
-*/
 void initializeSteinerTable(
     std::vector<std::vector<uint32_t>> &steinerDistanceTable,
     std::vector<std::vector<uint32_t>> &graph,
@@ -167,15 +131,27 @@ void initializeSteinerTable(
 
 uint32_t fetchIndexofMapofSets(std::set<uint32_t> subset)
 {
+  bool wasInit = false;
   uint32_t key;
   for(std::map<std::set<uint32_t>,uint32_t >::const_iterator it = subsetMap.begin(); it != subsetMap.end(); ++it)
   {
     if (it -> first == subset)
     {
       key = it ->second;
+      wasInit = true;
     }
   }
-  return key;
+  if (wasInit)
+    return key;
+  else {
+    std::cout << "No such a subset found in fetchIndexofMapofSets \n";
+    std::cout << "{ ";
+    for (const auto& elem : subset) {
+        std::cout << elem << " ";
+    }
+    std::cout << "}" << std::endl;
+    return 0;
+  }
 }
 
 /*
@@ -188,7 +164,7 @@ uint32_t Graph::calculateSteiner(
     std::vector<std::set<uint32_t>> allSubsets,
     uint32_t q)
 {
-  uint32_t sizetable = allSubsets.size() + numberOfNodes; //+ graph.size(); //
+  uint32_t sizetable = allSubsets.size() + numberOfNodes;
   std::vector<std::vector<uint32_t>> steinerDistanceTable(
       sizetable,
       std::vector<uint32_t> (sizetable, std::numeric_limits<uint32_t>::max()));
@@ -196,28 +172,26 @@ uint32_t Graph::calculateSteiner(
   //initialise steiner table
   initializeSteinerTable(steinerDistanceTable, adjMatrix, numberOfNodes, sizetable);
 
-  uint32_t indexOfSubset = 0;
+  uint32_t indexOfD = 0;
 
   std::set<std::set<uint32_t>>::iterator setIterator; // iterator for the "outer" structure
 
+  constexpr uint32_t ONE = 1;
 
-  //is it right range?
   for (uint32_t m = 2; m <= C.size(); ++m)
   {
-
-
     // for each subset
     for (uint32_t i = 0; i < allSubsets.size(); ++i)
     {
-      std::set<uint32_t> elementOfD = allSubsets[i];
-      if (elementOfD.size() == m)
+      std::set<uint32_t> D = allSubsets[i];
+      if (D.size() == m)
       {
-        indexOfSubset = subsetMap[elementOfD] + numberOfNodes;
+        indexOfD = subsetMap[D] + numberOfNodes;
 
         // initialise distance from elementOfD to every node in graph
         for (uint32_t k = 0; k < numberOfNodes; ++k) {
-          steinerDistanceTable[indexOfSubset][k] = std::numeric_limits<uint32_t>::max();
-          steinerDistanceTable[k][indexOfSubset] = std::numeric_limits<uint32_t>::max();
+          steinerDistanceTable[indexOfD][k] = std::numeric_limits<uint32_t>::max();
+          steinerDistanceTable[k][indexOfD] = std::numeric_limits<uint32_t>::max();
         }
 
         // for every element in graph
@@ -225,20 +199,37 @@ uint32_t Graph::calculateSteiner(
         {
           uint32_t u = std::numeric_limits<uint32_t>::max(); ;
 
+          std::vector<uint32_t> elements(D.begin(), D.end());
+          uint32_t n = elements.size();
 
-          //maybe I'm not right but iterates over emenets of size 1
-          for (std::set<uint32_t>::iterator nodeIterator = elementOfD.begin(); nodeIterator != elementOfD.end(); ++nodeIterator)
-          {
-            // E is being considered as a single number from the set named elementOfD
-            uint32_t E = *nodeIterator;
-            uint32_t distanceFromEToJ = steinerDistanceTable[E][j];
+          // Iterate over all possible subsets (2^n subsets)
+          for (uint32_t mask = 0; mask < (ONE << n); ++mask) {
+            std::set<uint32_t> E;
+            for (uint32_t k = 0; k < n; ++k) {
+              if (mask & (ONE << k)) { // Check if the i-th bit is set
+                E.insert(elements[k]);
+              }
+            }
+            uint32_t indexOfE;// = fetchIndexofMapofSets(E) + numberOfNodes;
+            if(E.size() == 0) //empty set
+              continue;
+            if(E.size() == 1)
+            {
+              std::set<uint32_t>::iterator node = E.begin();
+              indexOfE = *node;
+            }
+            else
+            {
+              indexOfE = fetchIndexofMapofSets(E) + numberOfNodes;
+            }
+            uint32_t distanceFromEToJ = steinerDistanceTable[indexOfE][j];
 
             std::set<uint32_t> DMinusE;
-            DMinusE = elementOfD;
+            DMinusE = D;
 
             for (std::set<uint32_t>::iterator iter = DMinusE.begin(); iter != DMinusE.end();)
             {
-              if (*iter == E)
+              if (E.find(*iter) != E.end())
               {
                 iter = DMinusE.erase(iter);
               }
@@ -248,6 +239,8 @@ uint32_t Graph::calculateSteiner(
               }
             }
             uint32_t dist, indexOfSubsetDMinusE;
+            if(DMinusE.size() == 0)
+              continue;
             if(DMinusE.size() == 1)
             {
               std::set<uint32_t>::iterator node = DMinusE.begin();
@@ -259,7 +252,6 @@ uint32_t Graph::calculateSteiner(
             }
 
             uint32_t distanceFromDMinusEToJ = steinerDistanceTable[indexOfSubsetDMinusE][j];
-
             if (distanceFromEToJ < std::numeric_limits<uint32_t>::max() && distanceFromDMinusEToJ < std::numeric_limits<uint32_t>::max()) {
               dist = distanceFromEToJ + distanceFromDMinusEToJ;
             } else {
@@ -268,19 +260,15 @@ uint32_t Graph::calculateSteiner(
             u = std::min(u, dist);
           }
 
-          uint32_t indexOfD = fetchIndexofMapofSets(elementOfD) + numberOfNodes;
-          uint32_t value = steinerDistanceTable[indexOfD][j];
-          u = std::min(u, value);
-
           uint32_t val;
 
           for (uint32_t k = 0; k < numberOfNodes; ++k)
           {
             val = adjMatrix[k][j];
             if (val < std::numeric_limits<uint32_t>::max() && u < std::numeric_limits<uint32_t>::max()) {
-              if (val + u < steinerDistanceTable[indexOfSubset][k]) {
-                steinerDistanceTable[indexOfSubset][k] = val + u;
-                steinerDistanceTable[k][indexOfSubset] = val + u;
+              if (val + u < steinerDistanceTable[indexOfD][k]) {
+                steinerDistanceTable[indexOfD][k] = val + u;
+                steinerDistanceTable[k][indexOfD] = val + u;
               }
             }
           }
@@ -293,24 +281,41 @@ uint32_t Graph::calculateSteiner(
 
   }
 
-  uint32_t TMP_NOT_IN_ALG = std::numeric_limits<uint32_t>::max();
-
   uint32_t v = std::numeric_limits<uint32_t>::max();
 
   for (uint32_t j = 0; j < numberOfNodes; j++)
   {
     uint32_t u = std::numeric_limits<uint32_t>::max();
+    std::vector<uint32_t> elements(C.begin(), C.end());
+    uint32_t n = elements.size();
 
-    std::set <uint32_t> C1 (C.begin(),C.end());
-    for (std::set<uint32_t>::iterator setiter = C1.begin(); setiter != C1.end(); ++setiter)
-    {
-      uint32_t E = *setiter;
-      uint32_t distEJ = steinerDistanceTable[E][j];
+    // Iterate over all possible subsets (2^n subsets)
+    for (uint32_t mask = 0; mask < (ONE << n); ++mask) {
+      std::set<uint32_t> E;
+      for (uint32_t k = 0; k < n; ++k) {
+        if (mask & (ONE << k)) { // Check if the i-th bit is set
+          E.insert(elements[k]);
+        }
+      }
+
+      uint32_t indexOfE;
+      if(E.size() == 0) //empty set
+        continue;
+      if(E.size() == 1)
+      {
+        std::set<uint32_t>::iterator node = E.begin();
+        indexOfE = *node;
+      }
+      else
+      {
+        indexOfE = fetchIndexofMapofSets(E) + numberOfNodes;
+      }
+      uint32_t distEJ = steinerDistanceTable[indexOfE][j];
 
       std::set<uint32_t> subsetCMinusE (C.begin(), C.end());
       for (std::set<uint32_t>::iterator iter = subsetCMinusE.begin(); iter != subsetCMinusE.end();)
       {
-        if (*iter == E)
+        if (E.find(*iter) != E.end())
         {
           iter = subsetCMinusE.erase(iter);
         }
@@ -320,6 +325,8 @@ uint32_t Graph::calculateSteiner(
         }
       }
       uint32_t indexOfSubsetCMinusE;
+      if(subsetCMinusE.size() == 0)
+        continue;
       if(subsetCMinusE.size() == 1)
       {
         std::set<uint32_t>::iterator node = subsetCMinusE.begin();
@@ -331,13 +338,10 @@ uint32_t Graph::calculateSteiner(
       }
 
       uint32_t val = steinerDistanceTable[indexOfSubsetCMinusE][j];
-
       if (distEJ < std::numeric_limits<uint32_t>::max() && val < std::numeric_limits<uint32_t>::max()) {
 
-        //TODO NOT IN ALGO
         if (u > distEJ + val) {
           u = distEJ + val;
-          TMP_NOT_IN_ALG = indexOfSubsetCMinusE;
         }
       }
     }
@@ -345,31 +349,19 @@ uint32_t Graph::calculateSteiner(
       std::cout << "Final J's " << j << "/" << numberOfNodes << std::endl;
     }
 
-    //TODO TEGO W ALG NIE BYLO
-    uint32_t indexOfC = fetchIndexofMapofSets(C1) + numberOfNodes;
-    uint32_t val = steinerDistanceTable[indexOfC][j];
-    u = std::min(u, val);
-
-    uint32_t value;
-
-    //TODO NOT IN ALGO
-    if (TMP_NOT_IN_ALG != std::numeric_limits<uint32_t>::max())
-      if (findInSet(getSetFromMap(TMP_NOT_IN_ALG),q))
-      { // if q in set for minimal u
-        value = 0;
-      }
-      else
-      {
-        value = adjMatrix[q][j];
-      }
-    else
-      value = adjMatrix[q][j];
+    uint32_t value = adjMatrix[q][j];
+    if (allSubsets[allSubsets.size() - 1].find(j) != allSubsets[allSubsets.size() - 1].end()) // j is one of the terminals
+    {
+      value = 0;
+    }
 
 
     if (value < std::numeric_limits<uint32_t>::max() && u < std::numeric_limits<uint32_t>::max())
     {
       v = std::min(v, value + u);
     }
+    v = std::min(v, steinerDistanceTable[sizetable - 1][j]); //mimal value for any j and all terminals e.i. optimal steiner tree
+
   }
   if (printFlag) {
     std::cout << " //// ";
@@ -396,27 +388,6 @@ uint32_t Graph::calculateSteiner(
   return v;
 }
 
-
-// void FloydAllPairsShortestPath(std::vector<std::vector<uint32_t>>& a, uint32_t n)
-// {
-//   uint32_t k, i, j;
-//   for (k = 0; k < n; k++)
-//   {
-//     for (i = 0; i < n; i++)
-//     {
-//       for (j = 0; j < n; j++)
-//       {
-//         if (a.at(i).at(j) > a.at(i).at(k) + a.at(k).at(j) )
-//         {
-//           a.at(i).at(j) = a.at(i).at(k) + a.at(k).at(j);
-//           // p[i][j] = k;
-//         }
-//       }
-//     }
-//   }
-// }
-
-
 uint32_t Graph::DreyfusWagner(std::vector<uint32_t> terminals) {
   // get graph instance
   std::shared_ptr<Graph> self = shared_from_this();
@@ -429,13 +400,8 @@ uint32_t Graph::DreyfusWagner(std::vector<uint32_t> terminals) {
 
   // terminals.erase(terminals.begin());
 
-
   std::vector<std::set<uint32_t>> allSubsets = generateSubsets(terminals);
-  // std::vector<std::set<uint32_t>> allSubsets = generateSubsets(*uintVertices);
-
-  // printUintVector(terminals);
   // terminals.erase(terminals.begin());
-  // printUintVector(terminals);
 
 
   // convert vertices to uint vec
@@ -455,7 +421,6 @@ uint32_t Graph::DreyfusWagner(std::vector<uint32_t> terminals) {
         return std::numeric_limits<uint32_t>::max();
       }
 
-      //TODO sometimes minal path is longer than one edge? HOW?
       if (i != j) {
         if (adjMatrix2[i][j] >= pathWeight) {
           adjMatrix2[i][j] = std::min(adjMatrix2[i][j], pathWeight);
@@ -472,8 +437,6 @@ uint32_t Graph::DreyfusWagner(std::vector<uint32_t> terminals) {
     adjMatrix2,
     allSubsets,
     q);
-  // tmpShortestPaths.clear();
-  // std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>>().swap(tmpShortestPaths);
   subsetMap.clear();
 
   return steinerWeight;

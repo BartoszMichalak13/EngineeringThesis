@@ -25,7 +25,7 @@ void parseGraphProperties(
     if (line.find("SECTION Graph") != std::string::npos)
     {
       // Parse nodes and edges
-      while (std::getline(file, line) && line != "END")
+      while (std::getline(file, line) && (line != "END" || line != "End"))
       {
         std::istringstream lineStream(line);
         std::string type;
@@ -46,10 +46,10 @@ void parseGraphProperties(
 }
 
 // Function to parse edges and terminals
-void parseEdgesAndTerminals(
+void parseEdges(
     const std::string& filename,
-    std::shared_ptr<Graph>& graph,
-    std::vector<uint32_t>& terminals)
+    std::shared_ptr<Graph>& graph
+    )
 {
   std::ifstream file(filename);
   std::string line;
@@ -59,7 +59,7 @@ void parseEdgesAndTerminals(
     if (line.find("SECTION Graph") != std::string::npos)
     {
       // Skip until edge definitions
-      while (std::getline(file, line) && line != "END")
+      while (std::getline(file, line) && (line != "END" || line != "End"))
       {
         std::istringstream lineStream(line);
         std::string type;
@@ -73,10 +73,23 @@ void parseEdgesAndTerminals(
         }
       }
     }
-    else if (line.find("SECTION Terminals") != std::string::npos)
+  }
+}
+
+// Function to parse edges and terminals
+void parseTerminals(
+    const std::string& filename,
+    std::vector<uint32_t>& terminals)
+{
+  std::ifstream file(filename);
+  std::string line;
+
+  while (std::getline(file, line))
+  {
+    if (line.find("SECTION Terminals") != std::string::npos)
     {
       // Parse terminals
-      while (std::getline(file, line) && line != "END")
+      while (std::getline(file, line) && (line != "END" || line != "End"))
       {
         std::istringstream lineStream(line);
         std::string type;
@@ -92,7 +105,6 @@ void parseEdgesAndTerminals(
   }
 }
 
-//TODO QOL change it so DreyfusWagner is 0th bit
 void printAlgorithmsToRunForm()
 {
   std::cerr << "algorithmsToRun is number which bits correspond to certain algorithms:" << std::endl;
@@ -172,7 +184,8 @@ std::shared_ptr<Graph> parseInput(
 
           graph = std::shared_ptr<Graph>(new Graph(numberOfNodes, numberOfEdges, printFlag));
 
-          parseEdgesAndTerminals(argv[3], graph, terminals);
+          parseEdges(argv[3], graph);
+          parseTerminals(argv[3], terminals);
           fileName = std::filesystem::current_path();
           fileName += argv[4];
           state = mode;

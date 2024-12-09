@@ -9,25 +9,6 @@
 #include <cmath>
 #include <memory>
 
-// TODO testowanie: wykresy dla przykladow z neta == wkleic wartosci z neta
-// TODO testowanie: wykresy generowane: zmiana terminali?
-// TODO testowanie: wykresy generowane: rozny rozmiar terminali DLA TEGO SAMEGO grafu
-// TODO testowanie: wykresy generowane: po 100x czy ile tam dla kazdego rozmiaru, zeby miec srednia, min, max
-// TODO testowanie: wykresy generowane: sensownie plotowanie/grupowanie terminali
-// TODO testowanie: wykresy generowane: czym są te chmury
-// TODO testowanie: porownaj z wartosciami podanymi przez autorow testow
-// TODO posprzątaj kod WSZĘDZIE - zostal Drayfus i graph.cpp
-// TODO inliny, consty, -O3 w g++
-// TODO usun niepotrzebne includy
-// TODO exact time measurement for each part of algorithm
-// TODO maybe MST should return the biggest edge it got?
-// or find it in adjList of MST
-// TODO repair all pairs shortest
-// TODO Czy tworzenie struktury drzewa uznac za zbedne aka liczyc do NOT NECCESARY w czasie?
-// TODO Remove DWcopy
-
-//TODO REPAIR DREYFUS?? b04
-
 int main(int argc, char *argv[])
 {
   // Used for single instance generation
@@ -78,24 +59,20 @@ int main(int argc, char *argv[])
     std::cerr << "Non positive density " << density << std::endl;
     return state;
   }
-  //TODO 1. make number of terminals more sensible
-  //TODO 2. if not connected try creating new one, if idk 50 in row failed return eror CHECK IT
-  //TODO 3. repair shortest path
 
   if (state == 2) // Loop generator
   {
-
     const uint32_t LowerLimitOfNodesCopy = LowerLimitOfNodes;
 
     //Modifies number of tests run
-    const uint32_t numberOfTests = 100;
+    const uint32_t numberOfTests = 15;
     for (uint32_t testNumber = 0; testNumber < numberOfTests; ++testNumber)
     {
-      // TODO remove?
-      std::cout << "test "  << testNumber << std::endl;
 
       // Modifies growth rate of terminals in next tests
-      const uint32_t terminalOffset = 5;
+      const uint32_t terminalOffset = 1;
+
+      const uint32_t maxNumberOfTerminals = 14;
 
       // Modifies growth rate of nodes in next tests
       const uint32_t nodeOffset = 10;
@@ -131,10 +108,10 @@ int main(int argc, char *argv[])
         }
 
         for ( uint32_t numberOfTerminals = minNumberOfTerminals;
-              numberOfTerminals < LowerLimitOfNodes;
+              numberOfTerminals < std::min(maxNumberOfTerminals,LowerLimitOfNodes);
               numberOfTerminals += terminalOffset)
         {
-          //TODO maybe many different terminals but of the same size? (5 but diffrent e.g. 1,2,3,5,6; 1,7,8,9,11; ...)
+
           std::vector<uint32_t> terminals1 = generateTerminals(LowerLimitOfNodes, numberOfTerminals);
           runAlgorithms(g1, terminals1, algorithmsToRun, outputFileName);
         }

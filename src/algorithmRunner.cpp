@@ -96,7 +96,7 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     duration of preparation for next iteration
     duration of main loop
   */
-  std::vector<std::chrono::microseconds> TMtimes = std::vector<std::chrono::microseconds>();
+  std::vector<std::chrono::microseconds> TMtimes = std::vector<std::chrono::microseconds>(10, std::chrono::microseconds(0));
 
   if (isNthBitSet(algorithmsToRun, 0)) {
 
@@ -138,7 +138,7 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
     duration of step4
     duration of step5
   */
-  std::vector<std::chrono::microseconds> KMBtimes = std::vector<std::chrono::microseconds>();
+  std::vector<std::chrono::microseconds> KMBtimes = std::vector<std::chrono::microseconds>(10, std::chrono::microseconds(0));
   if (isNthBitSet(algorithmsToRun, 1)) {
     auto startKMBST = std::chrono::high_resolution_clock::now();
 
@@ -210,7 +210,6 @@ void runAlgorithms(std::shared_ptr<Graph> graph, std::vector<uint32_t> terminals
 
     if (isNthBitSet(algorithmsToRun, 2))
       std::cout << "DreyfusWagner(OPT) steinerTree: " << durationDreyfus.count() << " microseconds" << std::endl;
-
     std::cout << std::endl;
     std::cout << std::endl;
   }

@@ -48,7 +48,6 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(
   stopNotNecessary = std::chrono::high_resolution_clock::now();
   durationNotNecessary += std::chrono::duration_cast<std::chrono::microseconds>(stopNotNecessary - startNotNecessary);
 
-  //TODO change it to normal Edges
   std::vector<PseudoEdge> tmpTreeEdges;
 
   bool foundTerminal = false;
@@ -56,7 +55,7 @@ std::shared_ptr<Graph> Graph::TakahashiMatsuyama(
 
   /***                 Time for all copies which are not necessary by algorithm itself to work properly                        ***/
   startInit = std::chrono::high_resolution_clock::now();
-  //TODO make it safe
+
   /*                                  Insert all neighbours of first terminal to queue                                           */
   std::shared_ptr<Edge> selfLoopInitEdge = constructSelfLoopInitEdge(vertices[terminals.at(0)]);
   for (uint32_t i = 0; i < localCopyOfAdjacencyList[terminals.at(0)].size(); ++i)

@@ -59,12 +59,10 @@ void copyAdjacencyListFromGraphWithNewNodeInstances(std::shared_ptr<Graph> graph
 Moves non empty vectors to free spaces in the front of the array
 */
 void sortAdjacencyList(uint32_t currentAdjListSize, std::vector<std::shared_ptr<Edge>>*& adjList) {
-  //TODO ponder if optimizeable
   for (uint32_t i = 0; i < currentAdjListSize; ++i) {
     if (adjList[i].size() == 0) {
       for (uint32_t j = i + 1; j < currentAdjListSize; ++j) {
         if (adjList[j].size() != 0) {
-          //TODO ponder if it's safe
           std::swap(adjList[i], adjList[j]);
           break;
         }
@@ -73,7 +71,6 @@ void sortAdjacencyList(uint32_t currentAdjListSize, std::vector<std::shared_ptr<
   }
 }
 
-//TODO 3 below chat gen, check them
 // Hash function for Edge based on node IDs
 struct EdgeHash {
   std::size_t operator()(const std::shared_ptr<Edge>& edge) const {
@@ -197,7 +194,6 @@ int32_t findInTmpTree(uint32_t edgeStart, uint32_t edgeEnd, std::vector<PseudoEd
 finds an edge in adjacencyList and returns pointer to it
 */
 std::shared_ptr<Edge> findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector<std::shared_ptr<Edge>>* adjacencyList) {
-
   for(uint32_t i = 0; i < adjacencyList[edgeStart].size(); ++i) {
     if (adjacencyList[edgeStart].at(i) == nullptr) {
       std::cerr << "Error: adjacencyList[" << edgeStart << "].at(" << i << ") returns nullpointer" << std::endl;
@@ -206,7 +202,6 @@ std::shared_ptr<Edge> findEdge(uint32_t edgeStart, uint32_t edgeEnd, std::vector
     if (adjacencyList[edgeStart].at(i)->end->id == edgeEnd) //TODO should be ok, bc we have 2 copies of this edge
       return adjacencyList[edgeStart].at(i);
   }
-  //TODO NORMALLY SHOULD BE PRINTED
   // std::cerr << "Error: findEdge returns nullpointer for "<< edgeStart << " - " << edgeEnd << std::endl;
   return nullptr;
 }

@@ -7,14 +7,6 @@
 #include <functional>
 #include <stdint.h>
 
-//TODO check ranges (e.g. function returning int32 instead of uint32)
-//TODO split into files, maybe for debug functions, helpers etc
-//TODO inline everything
-//TODO powrzucaj consty
-//TODO wszystkie uzycie adj powinny byc bezpieczne (tj bfs na steiner tree nie ma w adj[5] wierzcolka 5 itd)
-//TODO nazwy, ładne, czytelne, przenoszą sens
-
-//coś z resetem pewnie, użyj emplace moze na priorty que (deprecated?)
 
 Graph::Graph(uint32_t numberOfNodes, uint32_t numberOfEdges, bool printFlag) {
   this->printFlag = printFlag;
@@ -176,8 +168,6 @@ uint32_t Graph::graphTotalCost() {
   return cost/2; //we counted both edges 0-1 and 1-0
 }
 
-//TODO clear this mess
-//TODO zle value dla sciezki miedzy x i x (petla)
 /*
 Searches neighbourhood of node at nodeIndex, adds it to toVisitupdatePred
 */
@@ -230,8 +220,6 @@ void Graph::searchNeighboursV2(
   }
 }
 
-
-// TODO TMP
 // Function to print the priority_queue
 void printPriorityQueue(
     std::priority_queue<std::shared_ptr<Edge>,
@@ -251,9 +239,7 @@ void printPriorityQueue(
 All pairs shortest paths
 vector of vectors of Edges
 
-TODO does it always work as intended?
 */
-// std::shared_ptr<std::vector<std::shared_ptr<Edge>>>* Graph::AllPairsShortestPath(std::vector<uint32_t> terminals) {
 std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairsShortestPath(std::vector<uint32_t> terminals) {
 
   // just to be sure reset visitedStatus
@@ -320,7 +306,8 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
 
         std::shared_ptr<Edge> edgeFromAdjList = findEdge(startingNode, nextNodeIndex, adjacencyList);
         // If shortest path is just one edge add it
-        if (edgeFromAdjList != nullptr && e->weight > edgeFromAdjList->weight)
+        // if (edgeFromAdjList != nullptr && e->weight > edgeFromAdjList->weight)
+        if (edgeFromAdjList != nullptr && e->weight >= edgeFromAdjList->weight)
         {
           shortestPath->push_back(edgeFromAdjList);
           allPairsOfShortestPaths.push_back(shortestPath);
@@ -330,7 +317,6 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
         {
           std::shared_ptr<Edge> copyOfe = e;
 
-          //TODO can we put that code in while part? (same in Takahashi)
           std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
           shortestPath->push_back(edg);
           std::shared_ptr<Edge> oldPred = e->pred;
@@ -388,12 +374,8 @@ std::vector<std::shared_ptr<std::vector<std::shared_ptr<Edge>>>> Graph::AllPairs
   return allPairsOfShortestPaths;
 }
 
-//TODO centralny punkt majacy polaczenie do all innych w grafie, sprawdz jak to sie zachowuje
-
 /*
 This is Dijkstra algorithm, that stops when we have found node2
-
-Note
 */
 std::shared_ptr<std::vector<std::shared_ptr<Edge>>> Graph::ShortestPath(uint32_t node1, uint32_t node2) {
   std::shared_ptr<Graph> self = shared_from_this();
@@ -418,7 +400,6 @@ std::shared_ptr<std::vector<std::shared_ptr<Edge>>> Graph::ShortestPath(uint32_t
     e->end->visited = true;
     uint32_t nextNodeIndex = e->end->id;
     if (nextNodeIndex == node2) {
-      //TODO can we put that code in while part? (same in Takahashi)
       std::shared_ptr<Edge> oldPred = e->pred;
       std::shared_ptr<Edge> edg = findEdge(e->start->id, e->end->id, adjacencyList);
       (*shortestPath).push_back(edg);
@@ -554,7 +535,6 @@ bool Graph::checkIfEdgeExists(uint32_t node1Id, uint32_t node2Id) {
   return false;
 }
 
-//TODO works only on starting graph as adj[src] makes assumption that edge.start == src
 std::vector<std::vector<uint32_t>> Graph::toAdjacencyMatrix() {
 
   // deafault fill with inf
@@ -579,7 +559,6 @@ std::vector<std::vector<uint32_t>> Graph::toAdjacencyMatrix() {
   return adjacencyMatrix;
 }
 
-// TODO Possibly merge two functions below into 1
 /*
   Removes single edge instance from GIVEN adjacency list, used as helper function for removeEdgeFromAdjacencyList
   If this function is run then findInEdgeVectorAndReturnValue Errors can be ignored.
@@ -602,7 +581,6 @@ void Graph::removeSingleEdgeFromAdjacencyList(
 /*
   Removes both instances of edge from GIVEN adjacency list.
   If this function is run then findInEdgeVectorAndReturnValue Errors can be ignored.
-
 */
 void Graph::removeEdgeFromAdjacencyList(std::shared_ptr<Edge> e, std::vector<std::shared_ptr<Edge>>*& adjList) {
   removeSingleEdgeFromAdjacencyList(e->start, e->end, adjList);

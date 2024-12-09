@@ -10,6 +10,7 @@
 
 #include "GraphStructures.hpp"
 
+//used in graph generation, of no concern if we load a graph from a file
 const uint32_t maxEdgeWeight = 1024;
 
 /*
@@ -21,7 +22,6 @@ struct EdgeWeightComparatorOnPointers {
   }
 };
 
-// TODO change it to edge
 /*
 Struct simulating behaviour of an Edge. Craeted in rage after first attempts at implementations of TM algorithm
 */

@@ -3,10 +3,7 @@
 
 #include <cstdint>
 
-// TODO ta nazwa kłamie - split into multiple functions?
-/*
-TODO fill description
-*/
+
 std::shared_ptr<Graph> parseInput(
     int argc,
     char *argv[],

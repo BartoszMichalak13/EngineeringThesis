@@ -5,12 +5,6 @@
 #include "debugPrints.hpp"
 #include <algorithm>
 
-//TODO ASDFASDFASFASFASFA
-// 7->10; 7->11; 10->7; 10->11; 11->7; 11->5; 11->10; 11->1; 11->3; 5->11; 1->11; 3->11; 3->12; 12->3;
-// steinerTreeKouMarkowskyBerman is NOT acyclic
-
-//TODO na spokojnie sprawdz czy all pointery dzialaja tj, czy sa dobrze przepisywane
-//TODO opis
 /*
 1. Construct complete graph G_1 where V = terminals (Steiner Points), E = shortest paths between terminals
 2. Find mst of G_1
@@ -19,10 +13,6 @@
 5. Remove all branches that lead to leaf which is not Steiner Point (terminal)
 
 In all steps above if there are multiple answers to choose from (e.g. multiple msts) choos aribitrary one
-
-TODO Possible imporvements: what if we create not a clique, but a "normal" graph, we use same method, but we do not contract edges
-We may check basic algorithm and my changed version
-Most likely (almost obvoiusly) it will only change execution time, not resulting weight of Steiner Tree
 */
 std::shared_ptr<Graph> Graph::KouMarkowskyBerman(
     std::vector<uint32_t> terminals,
@@ -112,8 +102,6 @@ std::shared_ptr<Graph> Graph::KouMarkowskyBerman(
       int32_t idx = findInEdgeVector(start, end, ShortestPaths);
       if (idx > -1) {
         for (uint32_t k = 0; k < tmpShortestPaths.at(idx)->size(); ++k) {
-          // TODO make part below more transparent possibly add addEdgeIfNotAlreadyIn
-          // we can do that bc ShortestPaths.at(i) corresponds to tmpShortestPaths[i]
           std::shared_ptr<Edge> e = tmpShortestPaths.at(idx)->at(k);
           int32_t repetitionCheck = findInEdgeVector(e->start->id, e->end->id, treeEdges);
           if (repetitionCheck == -1) {

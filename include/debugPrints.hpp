@@ -5,7 +5,6 @@
 #include <memory>
 #include "graph.hpp"
 
-//TODO maybe remove them?
 /*
 Prints PseudoEdge.
 */
@@ -46,7 +45,7 @@ void printAdajcencyListPred(std::vector<std::shared_ptr<Edge>>* adjList, uint32_
 /*
 Used when dealing with vec of vec matrix instance.
 Prints values or MAX for std::numeric_limits<uint32_t>::max().
-TODO or INFO printed values have variable length (are NOT filled with 0s to given size)
+INFO printed values have variable length (are NOT filled with 0s to given size)
 */
 void printMatrix(const std::vector<std::vector<uint32_t>>& matrix);
 
